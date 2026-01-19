@@ -17,9 +17,11 @@ local_settings.py
 *.sqlite3-journal
 db.sqlite3
 db.sqlite3-journal
+
+
 /staticfiles/
-/mediafiles/
-/static/
+
+
 /media/
 
 # Virtual environments
