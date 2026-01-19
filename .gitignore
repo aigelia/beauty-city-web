@@ -1,14 +1,56 @@
 # Python-generated files
 __pycache__/
 *.py[oc]
+*.pyc
 build/
 dist/
 wheels/
 *.egg-info
+*.so
+.coverage
+.python-version
+
+# Django
+*.log
+local_settings.py
+*.sqlite3
+*.sqlite3-journal
+db.sqlite3
+db.sqlite3-journal
+/staticfiles/
+/mediafiles/
+/static/
+/media/
 
 # Virtual environments
-.venv
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
 
+# Environment files
 .env
-.idea
-db.sqlite3
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.iml
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Windows
+*.lnk
