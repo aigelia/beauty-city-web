@@ -10,8 +10,7 @@ import json
 
 
 def index(request):
-    salons = Salon.objects.filter(is_active=True)
-    salons = salons[:4]
+    salons = Salon.objects.filter(is_active=True)[:4]
 
     services = Service.objects.all()
 
