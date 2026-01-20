@@ -10,7 +10,64 @@ import json
 
 
 def index(request):
-    return render(request, "index.html")
+    # TODO: получать салоны из БД, limit 4 - чтобы не ползла верстка
+    salons = [
+        {
+            "name": "BeautyCity Пушкинская",
+            "address": "ул. Пушкинская, д. 78А",
+            "img": "static/img/salons/salon1.svg",
+        },
+        {
+            "name": "BeautyCity Ленина",
+            "address": "ул. Ленина, д. 211",
+            "img": "static/img/salons/salon2.svg",
+        },
+        {
+            "name": "BeautyCity Красная",
+            "address": "ул. Красная, д. 10",
+            "img": "static/img/salons/salon3.svg",
+        },
+    ]
+    salons = salons[:4]
+
+    # TODO: получить услуги из БД
+    one_service = {
+        "name": "Стрижка",
+        "price": "1000",
+        "img": "static/img/services/service1.svg",
+    }
+    services = [one_service.copy() for _ in range(5)]
+
+    # TODO: получить мастеров из БД + посчитать отзывы, если будут
+    # TODO: и что-то сделать с рейтингом ???
+    one_master = {
+        "id": 99, # TODO: для кнопки "Записаться" - нужно будет доделать в шаблоне
+        "name": "Мария Суворова",
+        "img": "static/img/masters/master1.svg",
+        "rating": "static/img/rating.svg",
+        "reviews_num": 10,
+        "spec": "Визажист",
+        "experience": "2 года"
+    }
+    masters = [one_master.copy() for _ in range(6)]
+
+    # TODO: получить отзывы из БД
+    one_review = {
+        "author": "Алина А.",
+        "rating": "static/img/rating.svg",
+        "text": "Отличное место для красоты, очень доброжелательный и отзывчивый персонал, девочки заботливые, аккуратные и большие профессионалы. Посещаю салон с самого начала, но он не теряет своей привлекательности, как в обслуживании.",
+        "date": "12 ноября 2022",
+    }
+    reviews = [one_review.copy() for _ in range(6)]
+
+    context = {
+        "salons": salons,
+        "empty_salons_count": max(0, 4 - len(salons)),
+        "services": services,
+        "masters": masters,
+        "reviews": reviews,
+    }
+    return render(request, "index.html", context)
 
 
 def notes(request):
