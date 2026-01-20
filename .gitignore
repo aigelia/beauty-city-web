@@ -20,6 +20,7 @@ db.sqlite3-journal
 
 
 /staticfiles/
+/beauty_city_web/static/img/*
 
 
 /media/

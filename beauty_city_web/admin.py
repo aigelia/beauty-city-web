@@ -13,6 +13,7 @@ from .models import (
     PromoCode,
     Appointment,
     Statistic,
+    Review,
 )
 
 
@@ -260,6 +261,16 @@ class StatisticAdmin(admin.ModelAdmin):
     date_hierarchy = "date"
 
 
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = (
+        "client",
+        "text",
+        "rating",
+    )
+    ordering = ("-date",)
+    date_hierarchy = "date"
+
+
 # Регистрация моделей в админке
 admin.site.register(Salon, SalonAdmin)
 admin.site.register(ServiceCategory, ServiceCategoryAdmin)
@@ -269,6 +280,7 @@ admin.site.register(Client, ClientAdmin)
 admin.site.register(PromoCode, PromoCodeAdmin)
 admin.site.register(Appointment, AppointmentAdmin)
 admin.site.register(Statistic, StatisticAdmin)
+admin.site.register(Review, ReviewAdmin)
 
 # Настройка админ-панели
 admin.site.site_header = "BeautyCity Администрация"

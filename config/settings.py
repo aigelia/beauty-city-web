@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "beauty_city_web",
+    'django_cleanup.apps.CleanupConfig',
 ]
 
 MIDDLEWARE = [

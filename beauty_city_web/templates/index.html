@@ -22,7 +22,7 @@
 				<div class="mobMenu__header">
 					<div class="row">
 						<div class="col-4 col-md-3">
-							<a href="/">
+							<a href={% url "beauty_city_web:index" %}>
 								<img src={% static "img/Logo.svg" %} alt="Logo" class="logo header__logo">
 							</a>
 						</div>
@@ -37,11 +37,11 @@
 							<nav>
 								<ul class="mobMenu__menu">
 									<li class="mobMenu__menu_item">
-										<a href="#" class="mobMenu__menu_link">Мастера</a>
+										<a href="#masters" class="mobMenu__menu_link">Мастера</a>
 									</li>
-									<li class="mobMenu__menu_item"><a href="#" class="mobMenu__menu_link">Услуги</a></li>
-									<li class="mobMenu__menu_item"><a href="#" class="mobMenu__menu_link">Отзывы</a></li>
-									<li class="mobMenu__menu_item"><a href="#" class="mobMenu__menu_link">Контакты</a></li>
+									<li class="mobMenu__menu_item"><a href="#services" class="mobMenu__menu_link">Услуги</a></li>
+									<li class="mobMenu__menu_item"><a href="#reviews" class="mobMenu__menu_link">Отзывы</a></li>
+									<li class="mobMenu__menu_item"><a href="#contacts" class="mobMenu__menu_link">Контакты</a></li>
 								</ul>
 							</nav>
 							<a href="#" class="mobMenu__account">Личный кабинет</a>
@@ -64,17 +64,17 @@
 						<img src={% static "img/hamburger.svg" %} alt="hamburger" class="header__mobMenu">
 					</div>
 					<div class="col-5 col-md-3 col-lg-2">
-						<a href="/">
+						<a href={% url "beauty_city_web:index" %}>
 							<img src={% static "img/Logo.svg" %} alt="Logo" class="logo header__logo">
 						</a>
 					</div>
 					<div class="col-md-5 ">
 						<nav>
 						<ul class="menu">
-							<li class="menu__item"><a href="#" class="menu__item_link">Мастера</a></li>
-							<li class="menu__item"><a href="#" class="menu__item_link">Услуги</a></li>
-							<li class="menu__item"><a href="#" class="menu__item_link">Отзывы</a></li>
-							<li class="menu__item"><a href="#" class="menu__item_link">Контакты</a></li>
+							<li class="menu__item"><a href="#masters" class="menu__item_link">Мастера</a></li>
+							<li class="menu__item"><a href="#services" class="menu__item_link">Услуги</a></li>
+							<li class="menu__item"><a href="#reviews" class="menu__item_link">Отзывы</a></li>
+							<li class="menu__item"><a href="#contacts" class="menu__item_link">Контакты</a></li>
 						</ul>
 					</nav>
 					</div>
@@ -108,7 +108,7 @@
 									довольных клиентов
 								</p>
 							</div>
-							<a href="service.html"><button class="banner__btn">Записаться</button></a>
+							<a href={% url "beauty_city_web:service" %}><button class="banner__btn">Записаться</button></a>
 						</div>
 					</div>
 					<div class="col-md-12 col-lg-5">
@@ -137,7 +137,9 @@
 				{% for salon in salons %}
 					<div class="col-6 col-md-4 col-lg-4 col-xl-3">
 						<div class="salons__block">
-							<img src="{{ salon.img }}" alt="salon" class="salons__block_img">
+							{% if salon.photo %}
+								<img src="{{ salon.photo.url }}" alt="salon" class="salons__block_img">
+							{% endif %}
 							<div class="salons__elems">
 								<div class="block__title salons__elems_title">{{ salon.name }}</div>
 								<div class="salons__elems_light">{{ salon.address }}</div>
@@ -164,7 +166,7 @@
 		<div class="container">
 			<div class="services pb100">
 				<div class="services__slider_arrows fic">
-					<div class="title">Услуги</div>
+					<div id="services" class="title">Услуги</div>
 					<div class="slider__arrows fic">
 						<div class="slider__arrows_arrow leftArrow">
 							<i class="arrowRight"></i>
@@ -179,7 +181,9 @@
 					{% for service in services %}
 					<div class="col-md-3">
 						<div class="cardBlock services__block">
-							<img src="{{ service.img }}" alt="service" class="services__block_img">
+							{% if service.photo %}
+								<img src="{{ service.photo.url }}" alt="service" class="services__block_img">
+							{% endif %}
 							<div class="services__elems">
 								<div class="services__elems_title">{{ service.name }}</div>
 								<div class="services__elems_light">{{ service.price }} ₽</div>
@@ -211,23 +215,25 @@
 						<div class="col-md-3">
 							<div class="cardBlock masters__block">
 								<div class="masters__header fic">
-									<img src="{{ master.img }}" alt="master" class="masters__header_img">
+									{% if master.photo %}
+										<img src="{{ master.photo.url}}" alt="master" class="masters__header_img">
+									{% endif %}
 									<div class="masters__header_elmes">
 										<div class="masters__header_name">{{ master.name }}</div>
-										<img src="{{ master.rating }}" alt="rating" class="masters__header_rating">
-										<div class="masters__header_reviews">Отзывов: {{ master.reviews_num }}</div>
+										<img src="{% static "img/rating.svg" %}" alt="rating" class="masters__header_rating">
+										<div class="masters__header_reviews">Отзывов: {{ master.reviews.count }}</div>
 									</div>
 								</div>
 								<div class="masters__main">
 									<div class="masters__main_speciality">СПЕЦИАЛЬНОСТЬ:</div>
-									<div class="masters__main_intro">{{ master.spec }}</div>
-								</div>
+										<div class="masters__main_intro">{{ master.specialty }}</div>
+									</div>
 								<div class="masters__footer fic">
 									<div class="masters__footer_block">
 										<div class="masters__footer_light">СТАЖ РАБОТЫ:</div>
 										<div class="masters__footer_num">{{ master.experience }}</div>
 									</div>
-									<button class="masters__footer_btn">Записаться</button>
+									<button onclick="window.location.href='{% url 'beauty_city_web:service' %}'"  class="masters__footer_btn">Записаться</button>
 								</div>
 							</div>
 						</div>
@@ -255,8 +261,8 @@
 					{% for review in reviews %}
 						<div class="col-md-3">
 							<div class="reviews__block">
-								<div class="reviews__name">{{ review.author }}</div>
-								<img src="{{ review.rating }}" alt="rating" class="reviews__header_rating">
+								<div class="reviews__name">{{ review.client.name }}</div>
+								<img src="{% static "img/rating.svg" %}" alt="rating" class="reviews__header_rating">
 								<div class="reviews__block_text">{{ review.text }}</div>
 								<div class="reviews__block_date">{{ review.date }}</div>
 							</div>
@@ -347,15 +353,15 @@
 				<div class="footer__block">
 					<div class="row">
 						<div class="col-md-3 col-lg-2">
-							<a href="/"><img src={% static "img/Logo.svg" %} alt="logo" class="footer__logo"></a>
+							<a href={% url "beauty_city_web:index" %}><img src={% static "img/Logo.svg" %} alt="logo" class="footer__logo"></a>
 						</div>
 						<div class="col-md-5 minMobHide">
 							<nav>
 								<ul class="menu">
-									<li class="menu__item"><a href="#" class="menu__item_link">Мастера</a></li>
-									<li class="menu__item"><a href="#" class="menu__item_link">Услуги</a></li>
-									<li class="menu__item"><a href="#" class="menu__item_link">Отзывы</a></li>
-									<li class="menu__item"><a href="#" class="menu__item_link">Контакты</a></li>
+									<li class="menu__item"><a href="#masters" class="menu__item_link">Мастера</a></li>
+									<li class="menu__item"><a href="#services" class="menu__item_link">Услуги</a></li>
+									<li class="menu__item"><a href="#reviews" class="menu__item_link">Отзывы</a></li>
+									<li class="menu__item"><a href="#contacts" class="menu__item_link">Контакты</a></li>
 								</ul>
 							</nav>
 						</div>
@@ -375,10 +381,10 @@
 							<div class="col-md-5 minMobShow">
 								<nav>
 									<ul class="menu">
-										<li class="menu__item"><a href="#" class="menu__item_link">Мастера</a></li>
-										<li class="menu__item"><a href="#" class="menu__item_link">Услуги</a></li>
-										<li class="menu__item"><a href="#" class="menu__item_link">Отзывы</a></li>
-										<li class="menu__item"><a href="#" class="menu__item_link">Контакты</a></li>
+										<li class="menu__item"><a href="#masters" class="menu__item_link">Мастера</a></li>
+										<li class="menu__item"><a href="#services" class="menu__item_link">Услуги</a></li>
+										<li class="menu__item"><a href="#reviews" class="menu__item_link">Отзывы</a></li>
+										<li class="menu__item"><a href="#contacts" class="menu__item_link">Контакты</a></li>
 									</ul>
 								</nav>
 							</div>

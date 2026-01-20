@@ -17,7 +17,7 @@ class Salon(models.Model):
         verbose_name="Часы работы",
         default="с 10:00 до 20:00 без выходных",
     )
-    photo = models.ImageField(
+    photo = models.FileField(
         upload_to="salons/", blank=True, null=True, verbose_name="Фото"
     )
     is_active = models.BooleanField(default=True, verbose_name="Активен")
@@ -60,7 +60,7 @@ class Service(models.Model):
         help_text="Продолжительность услуги в минутах",
     )
     description = models.TextField(blank=True, verbose_name="Описание")
-    photo = models.ImageField(
+    photo = models.FileField(
         upload_to="services/", blank=True, null=True, verbose_name="Фото"
     )
     is_active = models.BooleanField(default=True, verbose_name="Активна")
@@ -78,7 +78,7 @@ class Master(models.Model):
     """Модель мастера"""
 
     name = models.CharField(max_length=100, verbose_name="Имя мастера")
-    photo = models.ImageField(
+    photo = models.FileField(
         upload_to="masters/", blank=True, null=True, verbose_name="Фото"
     )
     specialty = models.CharField(max_length=200, verbose_name="Специальность")
@@ -294,3 +294,22 @@ class Statistic(models.Model):
     class Meta:
         verbose_name = "Статистика"
         verbose_name_plural = "Статистика"
+
+
+class Review(models.Model):
+    client = models.ForeignKey(Client, verbose_name="Клиент", on_delete=models.CASCADE)
+    text = models.TextField("Содержание")
+    date = models.DateField("Дата")
+    master = models.ForeignKey(Master, verbose_name="Мастер", related_name="reviews", on_delete=models.CASCADE)
+    rating = models.FloatField(
+        default=5.0,
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
+        verbose_name="Оценка",
+    )
+
+    def __str__(self):
+        return f"{self.client} - {self.date}"
+
+    class Meta:
+        verbose_name = "Отзыв"
+        verbose_name_plural = "Отзывы"
