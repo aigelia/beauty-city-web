@@ -32,14 +32,3 @@ def service(request):
 
 def service_finally(request):
     return render(request, "serviceFinally.html")
-
-
-def admin_page(request):
-    """Перенаправление на новую админ-панель"""
-    from .admin_views import admin_dashboard
-
-    return admin_dashboard(request)
-
-
-def is_admin(user):
-    return user.is_staff

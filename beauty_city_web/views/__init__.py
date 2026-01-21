@@ -1,5 +1,4 @@
 from .public import *
-from .admin_views import *
 from .api import *
 
 __all__ = [
@@ -11,16 +10,6 @@ __all__ = [
     "service_finally",
     "admin_page",
     "is_admin",
-    # Админ-представления
-    "admin_dashboard",
-    "admin_appointments",
-    "admin_appointment_detail",
-    "admin_clients",
-    "admin_client_detail",
-    "admin_promocodes",
-    "admin_reports",
-    "admin_calendar",
-    "admin_settings",
     # API представления
     "api_salons",
     "api_services",
