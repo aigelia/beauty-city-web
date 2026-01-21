@@ -3,56 +3,10 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
 from datetime import timedelta, datetime
-from .models import Appointment, Salon, Master, Service, Client, PromoCode, Review
-from .forms import AppointmentForm, PromoCodeForm, ClientForm
+from ..models import Appointment, Salon, Master, Service, Client, PromoCode
+from ..forms import AppointmentForm, PromoCodeForm, ClientForm
 import calendar
 import json
-
-
-def index(request):
-    salons = Salon.objects.filter(is_active=True)[:4]
-
-    services = Service.objects.all()
-
-    # TODO: и что-то сделать с рейтингом ???
-
-    masters = Master.objects.all()  # TODO: для кнопки "Записаться" - нужно будет доделать в шаблоне
-
-    reviews = Review.objects.all()
-
-    context = {
-        "salons": salons,
-        "empty_salons_count": max(0, 4 - len(salons)),
-        "services": services,
-        "masters": masters,
-        "reviews": reviews,
-    }
-    return render(request, "index.html", context)
-
-
-def notes(request):
-    return render(request, "notes.html")
-
-
-def popup(request):
-    return render(request, "popup.html")
-
-
-def service(request):
-    return render(request, "service.html")
-
-
-def service_finally(request):
-    return render(request, "serviceFinally.html")
-
-
-def admin_page(request):
-    """Перенаправление на новую админ-панель"""
-    return admin_dashboard(request)
-
-
-def is_admin(user):
-    return user.is_staff
 
 
 @staff_member_required
@@ -185,7 +139,6 @@ def admin_appointments(request):
     }
 
     return render(request, "admin_appointments.html", context)
-
 
 
 @staff_member_required

@@ -2,19 +2,112 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 import datetime
-from django.contrib.auth.forms import AuthenticationForm
-from .models import Appointment, PromoCode, Client
+from ..models import Appointment
 
 
-class AdminLoginForm(AuthenticationForm):
-    username = forms.CharField(
-        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Логин"})
+class AppointmentAdminForm(forms.ModelForm):
+    appointment_time = forms.ChoiceField(
+        choices=[],
+        label="Время записи",
+        help_text="Время с 10:00 до 19:00 с шагом 30 минут",
     )
-    password = forms.CharField(
-        widget=forms.PasswordInput(
-            attrs={"class": "form-control", "placeholder": "Пароль"}
+
+    class Meta:
+        model = Appointment
+        fields = [
+            "client",
+            "master",
+            "service",
+            "salon",
+            "appointment_date",
+            "appointment_time",
+            "status",
+            "promo_code",
+            "notes",
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        time_choices = []
+        for hour in range(10, 20):
+            for minute in (0, 30):
+                if hour == 19 and minute == 30:
+                    break
+                time_str = f"{hour:02d}:{minute:02d}"
+                time_choices.append((time_str, time_str))
+
+        self.fields["appointment_time"].choices = [("", "---------")] + time_choices
+
+        if self.instance and self.instance.appointment_time:
+            current_time = self.instance.appointment_time.strftime("%H:%M")
+            self.initial["appointment_time"] = current_time
+
+        today = timezone.now().date()
+        self.fields["appointment_date"].widget = forms.DateInput(
+            attrs={"type": "date", "min": today.isoformat()}
         )
-    )
+
+    def clean_appointment_date(self):
+        """Валидация даты - нельзя выбирать прошедшие дни"""
+        appointment_date = self.cleaned_data.get("appointment_date")
+
+        if appointment_date:
+            today = timezone.now().date()
+            if appointment_date < today:
+                raise ValidationError("Нельзя выбрать прошедшую дату")
+
+        return appointment_date
+
+    def clean_appointment_time(self):
+        """Преобразуем строку времени в объект time и валидируем"""
+        time_str = self.cleaned_data.get("appointment_time")
+        if not time_str:
+            return None
+
+        try:
+            hour, minute = map(int, time_str.split(":"))
+            appointment_time = datetime.time(hour, minute)
+
+            if hour < 10 or hour > 19:
+                raise ValidationError("Время должно быть с 10:00 до 19:00")
+
+            if minute not in [0, 30]:
+                raise ValidationError(
+                    "Время должно быть с шагом 30 минут (например: 10:00, 10:30, 11:00)"
+                )
+
+            return appointment_time
+
+        except (ValueError, TypeError):
+            raise ValidationError("Неверный формат времени")
+
+    def clean(self):
+        """Общая валидация формы"""
+        cleaned_data = super().clean()
+        appointment_date = cleaned_data.get("appointment_date")
+        appointment_time = cleaned_data.get("appointment_time")
+
+        if appointment_date and appointment_time:
+            now = timezone.now()
+
+            selected_datetime = datetime.datetime.combine(
+                appointment_date,
+                appointment_time,
+                tzinfo=timezone.get_current_timezone(),
+            )
+
+            if selected_datetime < now:
+                raise ValidationError("Нельзя записаться на прошедшее время")
+
+            if appointment_date == now.date():
+                min_datetime = now + datetime.timedelta(hours=1)
+                if selected_datetime < min_datetime:
+                    raise ValidationError(
+                        "При записи на сегодня минимальное время через 1 час"
+                    )
+
+        return cleaned_data
 
 
 class AppointmentForm(forms.ModelForm):
@@ -128,42 +221,3 @@ class AppointmentForm(forms.ModelForm):
                     )
 
         return cleaned_data
-
-
-class PromoCodeForm(forms.ModelForm):
-    class Meta:
-        model = PromoCode
-        fields = [
-            "code",
-            "discount_type",
-            "discount_value",
-            "description",
-            "valid_from",
-            "valid_to",
-            "is_active",
-            "max_uses",
-        ]
-        widgets = {
-            "valid_from": forms.DateTimeInput(
-                attrs={"type": "datetime-local", "class": "form-control"}
-            ),
-            "valid_to": forms.DateTimeInput(
-                attrs={"type": "datetime-local", "class": "form-control"}
-            ),
-        }
-
-    def clean(self):
-        cleaned_data = super().clean()
-        valid_from = cleaned_data.get("valid_from")
-        valid_to = cleaned_data.get("valid_to")
-
-        if valid_from and valid_to and valid_from >= valid_to:
-            raise ValidationError("Дата окончания должна быть позже даты начала")
-
-        return cleaned_data
-
-
-class ClientForm(forms.ModelForm):
-    class Meta:
-        model = Client
-        fields = ["phone", "name", "email"]
