@@ -1,0 +1,164 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Beauty City</title>
+        <link rel="preconnect" href="https://fonts\.googleapis\.com">
+        <link rel="preconnect" href="https://fonts\.gstatic\.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+
+        <link rel="stylesheet" href={% static "css/bootstrap-grid.min.css" %}>
+        <link rel="stylesheet" href={% static "css/main.css" %}>
+        {% block head %}{% endblock head %}
+    </head>
+    <body>
+        <section id="mobMenu">
+            <div class="mobMenu">
+                <div class="container">
+                    <div class="mobMenu__header">
+                        <div class="row">
+                            <div class="col-4 col-md-3">
+                                <a href={% url "beauty_city_web:index" %}>
+                                    <img src={% static "img/Logo.svg" %} alt="Logo" class="logo header__logo">
+                                </a>
+                            </div>
+                            <div class="col-3 col-md-2">
+                                <img src={% static "img/x.svg" %} alt="x" class="mobMenuClose">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mobMenu__content">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <nav>
+                                    <ul class="mobMenu__menu">
+                                        <li class="mobMenu__menu_item">
+                                            <a href="{% url 'beauty_city_web:index' %}#masters" class="mobMenu__menu_link">Мастера</a>
+                                        </li>
+                                        <li class="mobMenu__menu_item"><a href="{% url 'beauty_city_web:index' %}#services" class="mobMenu__menu_link">Услуги</a></li>
+                                        <li class="mobMenu__menu_item"><a href="{% url 'beauty_city_web:index' %}#reviews" class="mobMenu__menu_link">Отзывы</a></li>
+                                        <li class="mobMenu__menu_item"><a href="{% url 'beauty_city_web:index' %}#contacts" class="mobMenu__menu_link">Контакты</a></li>
+                                    </ul>
+                                </nav>
+                                <a href="#" class="mobMenu__account">Личный кабинет</a>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <button class="mobMenu__btn">Перезвоните мне</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <header id="header">
+            <div class="container">
+                <div class="header">
+                    <div class="row">
+                        <div class="col-2 col-md-2 mob">
+                            <img src={% static "img/hamburger.svg" %} alt="hamburger" class="header__mobMenu">
+                        </div>
+                        <div class="col-5 col-md-3 col-lg-2">
+                            <a href={% url "beauty_city_web:index" %}>
+                                <img src={% static "img/Logo.svg" %} alt="Logo" class="logo header__logo">
+                            </a>
+                        </div>
+                        <div class="col-md-5 ">
+                            <nav>
+                                <ul class="menu">
+                                    <li class="menu__item"><a href="{% url 'beauty_city_web:index' %}#masters" class="menu__item_link">Мастера</a></li>
+                                    <li class="menu__item"><a href="{% url 'beauty_city_web:index' %}#services" class="menu__item_link">Услуги</a></li>
+                                    <li class="menu__item"><a href="{% url 'beauty_city_web:index' %}#reviews" class="menu__item_link">Отзывы</a></li>
+                                    <li class="menu__item"><a href="{% url 'beauty_city_web:index' %}#contacts" class="menu__item_link">Контакты</a></li>
+                                </ul>
+                            </nav>
+                        </div>
+                        <div class="col-2 col-md-2 col-lg-3">
+                            <div class="header__block">
+                                <a href="tel:+79179023800"><button class="header__block_btn">Перезвоните мне</button></a>
+                                <div class="header__block_auth">
+                                    <img src={% static "img/acc.svg" %} alt="account" class="header__account_img">
+                                    <span class="header__block_auth__intro">Войти</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        {% block content %}{% endblock content %}
+        <footer id="footer">
+            <div class="container">
+                <div class="footer">
+                    <div class="footer__block">
+                        <div class="row">
+                            <div class="col-md-3 col-lg-2">
+                                <a href="/"><img src={% static "img/Logo.svg" %} alt="logo" class="footer__logo"></a>
+                            </div>
+                            <div class="col-md-5 minMobHide">
+                                <nav>
+                                    <ul class="menu">
+                                        <li class="menu__item"><a href="{% url 'beauty_city_web:index' %}#masters" class="menu__item_link">Мастера</a></li>
+                                        <li class="menu__item"><a href="{% url 'beauty_city_web:index' %}#services" class="menu__item_link">Услуги</a></li>
+                                        <li class="menu__item"><a href="{% url 'beauty_city_web:index' %}#reviews" class="menu__item_link">Отзывы</a></li>
+                                        <li class="menu__item"><a href="{% url 'beauty_city_web:index' %}#contacts" class="menu__item_link">Контакты</a></li>
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                        <div class="footer__contact">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="footer__data">с 10:00 до 20:00  без выходных</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <a href="tel:+79179023800" class="contacts__info_tel">+7 (917) 902 38 00</a>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-5 minMobShow">
+                                    <nav>
+                                        <ul class="menu">
+                                            <li class="menu__item"><a href="{% url 'beauty_city_web:index' %}#masters" class="menu__item_link">Мастера</a></li>
+                                            <li class="menu__item"><a href="{% url 'beauty_city_web:index' %}#services" class="menu__item_link">Услуги</a></li>
+                                            <li class="menu__item"><a href="{% url 'beauty_city_web:index' %}#reviews" class="menu__item_link">Отзывы</a></li>
+                                            <li class="menu__item"><a href="{% url 'beauty_city_web:index' %}#contacts" class="menu__item_link">Контакты</a></li>
+                                        </ul>
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
+                        <hr class="hr"></hr>
+                        <div class="footer__bottom">
+                            <div class="row">
+                                <div class="col-md-4 col-lg-3">
+                                    <a href="#" class="footer__link">Политика конфиденциальности</a>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="footer__copy">2022. Все права защищены</div>
+                                </div>
+                                <div class="col-md-3 col-lg-2">
+                                    <div class="footer__social fic">
+                                        <a href=""><img src={% static "img/waGray.svg" %} alt="wa" class="contacts__social_icon"></a>
+                                        <a href=""><img src={% static "img/vkGray.svg" %} alt="vk" class="contacts__social_icon"></a>
+                                        <a href=""><img src={% static "img/tgGray.svg" %} alt="tg" class="contacts__social_icon"></a>
+                                        <a href=""><img src={% static "img/instaGray.svg" %} alt="insta" class="contacts__social_icon"></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+        {% block popups %}{% endblock popups %}
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js" integrity="sha512-aVKKRRi/Q/YV+4mjoKBsE4x3H+BkegoM/em46NNlCqNTmUYADjBbeNefNxYV7giUp0VxICtqdrbqU7iVaeZNXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	    <script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js" integrity="sha512-XtmMtDEcNz2j7ekrtHvOVR4iwwaD6o/FUJe6+Zq+HgcCsk3kj4uSQQR8weQ2QVj1o0Pk6PwYLohm206ZzNfubg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+        <script src={% static "js/main.js" %}></script>
+        {% block scripts %}{% endblock scripts %}
+    </body>
+</html>
