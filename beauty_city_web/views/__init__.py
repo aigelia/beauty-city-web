@@ -18,4 +18,6 @@ __all__ = [
     "api_check_promo",
     "api_create_appointment",
     "api_get_appointment_details",
+    "api_client_statistics",
+    "api_total_clients",
 ]

@@ -30,4 +30,10 @@ urlpatterns = [
         views.api_get_appointment_details,
         name="api_appointment_details",
     ),
+    path(
+        "api/client-statistics/",
+        views.api_client_statistics,
+        name="api_client_statistics",
+    ),
+    path("api/total-clients/", views.api_total_clients, name="api_total_clients"),
 ]

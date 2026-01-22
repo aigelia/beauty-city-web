@@ -1,6 +1,7 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
+from django.utils import timezone
 from datetime import datetime, timedelta
 from ..models import Appointment, Salon, Master, Service, Client, PromoCode
 from django.core.exceptions import ValidationError
@@ -417,3 +418,51 @@ def api_get_appointment_details(request):
         return JsonResponse(data)
     except (Salon.DoesNotExist, Service.DoesNotExist, Master.DoesNotExist) as e:
         return JsonResponse({"error": str(e)}, status=400)
+
+
+@csrf_exempt
+def api_client_statistics(request):
+    """Получить статистику по клиентам"""
+
+    period = request.GET.get("period", "all")
+
+    stats = Client.get_registration_stats(period if period != "all" else None)
+
+    today = timezone.now().date()
+
+    today_count = Client.objects.filter(registration_date__date=today).count()
+
+    week_ago = today - timedelta(days=7)
+    weekly_count = Client.objects.filter(registration_date__date__gte=week_ago).count()
+
+    month_ago = today - timedelta(days=30)
+    active_clients = (
+        Client.objects.filter(appointments__appointment_date__gte=month_ago)
+        .distinct()
+        .count()
+    )
+
+    response_data = {
+        "total_clients": stats["total_count"],
+        "today_registrations": today_count,
+        "weekly_registrations": weekly_count,
+        "active_clients": active_clients,
+        "daily_stats": stats["daily_stats"],
+        "period": period,
+        "last_updated": timezone.now().isoformat(),
+    }
+
+    return JsonResponse(response_data)
+
+
+@csrf_exempt
+def api_total_clients(request):
+    """Получить общее количество клиентов (простая версия для админки)"""
+
+    total_clients = Client.objects.count()
+    return JsonResponse(
+        {
+            "total_clients": total_clients,
+            "message": f"Всего зарегистрировано клиентов: {total_clients}",
+        }
+    )
