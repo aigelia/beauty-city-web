@@ -8,8 +8,6 @@ app_name = "beauty_city_web"
 urlpatterns = [
     # Публичные страницы
     path("", views.index, name="index"),
-    path("notes/", views.notes, name="notes"),
-    path("popup/", views.popup, name="popup"),
     path("service/", views.service, name="service"),
     path("service-finally/", views.service_finally, name="service_finally"),
     # API маршруты (для фронтенда)

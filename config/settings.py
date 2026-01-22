@@ -89,3 +89,6 @@ STATICFILES_DIRS = []
 # Для загружаемых файлов
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+# Yandex Maps API
+YANDEX_MAPS_API_KEY = env.str("YANDEX_MAPS_API_KEY", "")

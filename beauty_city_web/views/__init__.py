@@ -4,8 +4,6 @@ from .api import *
 __all__ = [
     # Публичные представления
     "index",
-    "notes",
-    "popup",
     "service",
     "service_finally",
     "admin_page",
