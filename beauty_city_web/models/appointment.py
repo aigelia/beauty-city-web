@@ -62,7 +62,17 @@ class Appointment(models.Model):
     notes = models.TextField(blank=True, verbose_name="Примечания")
 
     def save(self, *args, **kwargs):
-        """Переопределяем save для расчета цен"""
+        """Переопределяем save для расчета цен и валидации времени"""
+
+        if self.appointment_time:
+            hour = self.appointment_time.hour
+            minute = self.appointment_time.minute
+
+            if hour < 10 or hour > 19:
+                raise ValueError("Время должно быть с 10:00 до 19:00")
+
+            if minute not in [0, 30]:
+                raise ValueError("Время должно быть с шагом 30 минут")
 
         if not self.original_price and self.service:
             self.original_price = self.service.price
@@ -75,7 +85,6 @@ class Appointment(models.Model):
             self.discount_amount = 0
 
         self.final_price = self.original_price - self.discount_amount
-
         super().save(*args, **kwargs)
 
     def __str__(self):

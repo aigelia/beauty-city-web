@@ -58,5 +58,5 @@ def validate_appointment_datetime(date_value, time_value):
             min_datetime = now + datetime.timedelta(hours=1)
             if selected_datetime < min_datetime:
                 raise ValidationError(
-                    f"При записи на сегодня минимальное время: {min_datetime.strftime('%H:%M')}"
+                    f"При записи на сегодня минимальное время через 1 час"
                 )
