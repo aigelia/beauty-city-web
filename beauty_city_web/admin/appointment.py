@@ -40,16 +40,6 @@ class AppointmentAdmin(admin.ModelAdmin):
         ("Дополнительно", {"fields": ("promo_code", "notes", "created_at")}),
     )
 
-    def save_model(self, request, obj, form, change):
-        """Сохраняем модель, увеличивая счетчик промокода при создании"""
-
-        super().save_model(request, obj, form, change)
-        
-        if not change and obj.promo_code and obj.promo_code.is_valid():
-            obj.promo_code.used_count += 1
-            obj.promo_code.save()
-
-
     def has_promo(self, obj):
         return obj.promo_code is not None
 

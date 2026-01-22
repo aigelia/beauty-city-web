@@ -14,7 +14,6 @@ class PromoCodeForm(forms.ModelForm):
             "valid_from",
             "valid_to",
             "is_active",
-            "max_uses",
         ]
         widgets = {
             "valid_from": forms.DateTimeInput(

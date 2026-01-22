@@ -10,12 +10,10 @@ class PromoCodeAdmin(admin.ModelAdmin):
         "valid_from",
         "valid_to",
         "is_active",
-        "used_count",
-        "max_uses",
     )
     list_filter = ("is_active", "discount_type")
     search_fields = ("code", "description")
-    list_editable = ("is_active", "max_uses")
+    list_editable = ("is_active",)
 
     def get_queryset(self, request):
         return super().get_queryset(request).prefetch_related("appointments")

@@ -254,8 +254,6 @@ def api_check_promo(request):
                     "discount_type": promo.discount_type,
                     "discount_value": float(promo.discount_value),
                     "description": promo.description,
-                    "max_uses": promo.max_uses,
-                    "used_count": promo.used_count,
                 }
             )
         else:

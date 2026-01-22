@@ -25,29 +25,11 @@ class PromoCode(models.Model):
     valid_from = models.DateTimeField(verbose_name="Действует с")
     valid_to = models.DateTimeField(verbose_name="Действует до")
     is_active = models.BooleanField(default=True, verbose_name="Активен")
-    max_uses = models.IntegerField(
-        default=1, verbose_name="Максимальное количество использований"
-    )
-    used_count = models.IntegerField(default=0, verbose_name="Количество использований")
-
-    def save(self, *args, **kwargs):
-        """Переопределяем save для проверки максимального использования"""
-
-        if self.used_count > self.max_uses:
-            raise ValidationError(
-                f"Промокод уже использован максимальное количество раз ({self.max_uses})"
-            )
-
-        super().save(*args, **kwargs)
 
     def is_valid(self):
         """Проверка валидности промокода"""
         now = timezone.now()
-        return (
-            self.is_active
-            and self.valid_from <= now <= self.valid_to
-            and self.used_count < self.max_uses
-        )
+        return self.is_active and self.valid_from <= now <= self.valid_to
 
     def calculate_discount(self, price):
         """Расчет скидки на основе цены"""
