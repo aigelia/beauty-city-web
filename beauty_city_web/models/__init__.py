@@ -7,6 +7,7 @@ from .promocode import PromoCode
 from .appointment import Appointment
 from .statistic import Statistic
 from .review import Review
+from .consultation import Consultation
 
 __all__ = [
     "Salon",
@@ -18,4 +19,5 @@ __all__ = [
     "Appointment",
     "Statistic",
     "Review",
+    "Consultation",
 ]

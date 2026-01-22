@@ -7,6 +7,7 @@ from .promocode import PromoCodeAdmin
 from .appointment import AppointmentAdmin
 from .statistic import StatisticAdmin
 from .review import ReviewAdmin
+from .consultation import ConsultationAdmin
 
 from ..models import (
     Salon,
@@ -18,6 +19,7 @@ from ..models import (
     Appointment,
     Statistic,
     Review,
+    Consultation,
 )
 
 # Регистрация моделей в админке
@@ -30,6 +32,7 @@ admin.site.register(PromoCode, PromoCodeAdmin)
 admin.site.register(Appointment, AppointmentAdmin)
 admin.site.register(Statistic, StatisticAdmin)
 admin.site.register(Review, ReviewAdmin)
+admin.site.register(Consultation, ConsultationAdmin)
 
 # Настройка админ-панели
 admin.site.site_header = "BeautyCity Администрация"

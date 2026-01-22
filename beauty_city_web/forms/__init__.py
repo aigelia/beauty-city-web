@@ -3,6 +3,7 @@ from .promocode import PromoCodeForm
 from .client import ClientForm
 from .auth import AdminLoginForm
 from .booking import AppointmentBookingForm
+from .consultation import ConsultationAdminForm
 
 __all__ = [
     "AppointmentForm",
@@ -11,4 +12,5 @@ __all__ = [
     "ClientForm",
     "AdminLoginForm",
     "AppointmentBookingForm",
+    "ConsultationAdminForm",
 ]
