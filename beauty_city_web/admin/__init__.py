@@ -5,7 +5,6 @@ from .master import MasterAdmin
 from .client import ClientAdmin
 from .promocode import PromoCodeAdmin
 from .appointment import AppointmentAdmin
-from .statistic import StatisticAdmin
 from .review import ReviewAdmin
 from .consultation import ConsultationAdmin
 
@@ -17,7 +16,6 @@ from ..models import (
     Client,
     PromoCode,
     Appointment,
-    Statistic,
     Review,
     Consultation,
 )
@@ -30,7 +28,6 @@ admin.site.register(Master, MasterAdmin)
 admin.site.register(Client, ClientAdmin)
 admin.site.register(PromoCode, PromoCodeAdmin)
 admin.site.register(Appointment, AppointmentAdmin)
-admin.site.register(Statistic, StatisticAdmin)
 admin.site.register(Review, ReviewAdmin)
 admin.site.register(Consultation, ConsultationAdmin)
 
