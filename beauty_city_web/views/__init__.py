@@ -20,4 +20,5 @@ __all__ = [
     "api_get_appointment_details",
     "api_client_statistics",
     "api_total_clients",
+    "api_contact_request",
 ]

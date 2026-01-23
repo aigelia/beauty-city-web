@@ -194,21 +194,22 @@
 				<div class="title contacts__title">Контакты</div>
 				<div class="row">
 					<div class="col-md-12 col-lg-4 col-xl-3">
-						<form action="#" class="contacts__form">
+						<form id="contactForm" class="contacts__form">
 							<div class="contacts__form_title">Оставьте заявку на консультацию</div>
 							<div class="contacts__form_block">
-								<input type="text" name="fname" class="contacts__form_iunput" placeholder="Введите имя" required>
+								<input type="text" name="name" id="contactName" class="contacts__form_iunput" placeholder="Введите имя" required>
 								<div class="contacts__form_inputBlock">
-									<input type="text" name="tel" class="contacts__form_iunput" placeholder="+7(999)999--99-99" required>
+									<input type="text" name="phone" id="contactPhone" class="contacts__form_iunput" placeholder="+7(999)999-99-99" required>
 								</div>
 							</div>
-							
-							<textarea name="contactsTextarea" class="contacts__form_textarea" placeholder="Вопрос(необязательно)"></textarea>
+
+							<textarea name="question" id="contactQuestion" class="contacts__form_textarea" placeholder="Вопрос (необязательно)"></textarea>
 							<div class="contacts__form_checkboxBlock fic">
-								<input type="checkbox" class="contacts__form_checkbox" checked>
-								<span class="contacts__form_checkboxBlock__intro">Я согласен(а) с политикой конфидециоальности</span>
+								<input type="checkbox" name="terms_agreed" id="contactTerms" class="contacts__form_checkbox" checked required>
+								<span class="contacts__form_checkboxBlock__intro">Я согласен(а) с политикой конфиденциальности</span>
 							</div>
 							<button type="submit" class="contacts__form_btn">Отправить</button>
+							<div id="contactFormMessage" style="margin-top: 10px; display: none;"></div>
 						</form>
 					</div>
 					<div class="col-md-12 col-lg-3">
@@ -360,6 +361,49 @@
 					}
 				}).catch(function(error) {
 					console.error('Ошибка геокодирования для ' + salon.full_address + ':', error);
+				});
+			});
+		});
+
+		// Обработка формы обратной связи
+		$(document).ready(function() {
+			$('#contactForm').on('submit', function(e) {
+				e.preventDefault();
+
+				var formData = {
+					name: $('#contactName').val(),
+					phone: $('#contactPhone').val(),
+					question: $('#contactQuestion').val(),
+					terms_agreed: $('#contactTerms').is(':checked')
+				};
+
+				var $button = $(this).find('button[type="submit"]');
+				var $message = $('#contactFormMessage');
+
+				$button.prop('disabled', true).text('Отправка...');
+				$message.hide();
+
+				$.ajax({
+					url: '{% url "beauty_city_web:api_contact_request" %}',
+					type: 'POST',
+					contentType: 'application/json',
+					data: JSON.stringify(formData),
+					success: function(response) {
+						$message.html('<div style="color: green; font-weight: bold;">' + response.message + '</div>').show();
+						$('#contactForm')[0].reset();
+						$button.prop('disabled', false).text('Отправить');
+					},
+					error: function(xhr) {
+						var errorMsg = 'Произошла ошибка при отправке';
+						if (xhr.responseJSON && xhr.responseJSON.errors) {
+							var errors = xhr.responseJSON.errors;
+							errorMsg = Object.values(errors).flat().join(', ');
+						} else if (xhr.responseJSON && xhr.responseJSON.error) {
+							errorMsg = xhr.responseJSON.error;
+						}
+						$message.html('<div style="color: red; font-weight: bold;">' + errorMsg + '</div>').show();
+						$button.prop('disabled', false).text('Отправить');
+					}
 				});
 			});
 		});

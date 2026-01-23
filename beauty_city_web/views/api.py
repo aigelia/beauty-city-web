@@ -533,3 +533,63 @@ def api_total_clients(request):
             "message": f"Всего зарегистрировано клиентов: {total_clients}",
         }
     )
+
+
+@csrf_exempt
+def api_contact_request(request):
+    """Создать заявку на консультацию с главной страницы"""
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+
+            name = data.get("name")
+            phone = data.get("phone")
+            question = data.get("question", "")
+            terms_agreed = data.get("terms_agreed")
+
+            # Валидация
+            if not name or not phone:
+                return JsonResponse(
+                    {"success": False, "error": "Имя и телефон обязательны"},
+                    status=400,
+                )
+
+            if not terms_agreed:
+                return JsonResponse(
+                    {
+                        "success": False,
+                        "error": "Необходимо согласие с политикой конфиденциальности",
+                    },
+                    status=400,
+                )
+
+            # Создаем или получаем клиента
+            client, created = Client.objects.get_or_create(
+                phone=phone, defaults={"name": name}
+            )
+
+            if not created and client.name != name:
+                client.name = name
+                client.save()
+
+            # Создаем консультацию
+            from ..models import Consultation
+
+            consultation = Consultation.objects.create(
+                client=client, notes=question, status="pending"
+            )
+
+            return JsonResponse(
+                {
+                    "success": True,
+                    "message": "Спасибо! Мы свяжемся с вами в ближайшее время.",
+                    "consultation_id": consultation.id,
+                }
+            )
+
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+    return JsonResponse({"error": "Method not allowed"}, status=405)

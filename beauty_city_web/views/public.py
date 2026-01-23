@@ -17,7 +17,7 @@ def index(request):
             'name': salon.name,
             'address': salon.address,
             'full_address': f"Москва, {salon.address}",
-            'phone': salon.phone,
+            'phone': str(salon.phone) if salon.phone else "",
             'working_hours': salon.working_hours,
         })
 

@@ -36,4 +36,5 @@ urlpatterns = [
         name="api_client_statistics",
     ),
     path("api/total-clients/", views.api_total_clients, name="api_total_clients"),
+    path("api/contact-request/", views.api_contact_request, name="api_contact_request"),
 ]
