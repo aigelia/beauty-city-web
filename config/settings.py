@@ -20,8 +20,9 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "phonenumber_field",
     "beauty_city_web",
-    'django_cleanup.apps.CleanupConfig',
+    "django_cleanup.apps.CleanupConfig",
 ]
 
 MIDDLEWARE = [
@@ -92,3 +93,6 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 # Yandex Maps API
 YANDEX_MAPS_API_KEY = env.str("YANDEX_MAPS_API_KEY", "")
+
+PHONENUMBER_DEFAULT_REGION = "RU"
+PHONENUMBER_DEFAULT_FORMAT = "INTERNATIONAL"

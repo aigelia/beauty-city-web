@@ -1,6 +1,5 @@
 from django import forms
-from django.core.exceptions import ValidationError
-import re
+from phonenumber_field.formfields import PhoneNumberField
 from ..models import PromoCode
 
 
@@ -12,11 +11,12 @@ class AppointmentBookingForm(forms.Form):
         ),
     )
 
-    phone = forms.CharField(
-        max_length=20,
+    phone = PhoneNumberField(
+        region="RU",
         widget=forms.TextInput(
             attrs={"class": "contacts__form_iunput", "placeholder": "+7(999)999-99-99"}
         ),
+        label="Телефон",
     )
 
     email = forms.EmailField(
@@ -57,15 +57,6 @@ class AppointmentBookingForm(forms.Form):
             "required": "Вы должны согласиться с политикой конфиденциальности"
         },
     )
-
-    def clean_phone(self):
-        phone = self.cleaned_data["phone"]
-        phone_pattern = r"^(\+7|7|8)?[\s\-]?\(?[489][0-9]{2}\)?[\s\-]?[0-9]{3}[\s\-]?[0-9]{2}[\s\-]?[0-9]{2}$"
-
-        if not re.match(phone_pattern, phone.replace(" ", "").replace("-", "")):
-            raise ValidationError("Введите корректный номер телефона")
-
-        return phone
 
     def clean(self):
         cleaned_data = super().clean()

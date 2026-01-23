@@ -1,4 +1,5 @@
 from django.db import models
+from phonenumber_field.modelfields import PhoneNumberField
 
 
 class Salon(models.Model):
@@ -6,8 +7,10 @@ class Salon(models.Model):
 
     name = models.CharField(max_length=200, verbose_name="Название салона")
     address = models.CharField(max_length=300, verbose_name="Адрес")
-    phone = models.CharField(
-        max_length=20, verbose_name="Телефон", default="+7 (917) 902 38 00"
+    phone = PhoneNumberField(
+        verbose_name="Телефон",
+        default="+79179023800",
+        region="RU",
     )
     working_hours = models.CharField(
         max_length=100,

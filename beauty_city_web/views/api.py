@@ -1,3 +1,5 @@
+from phonenumbers import PhoneNumberFormat, format_number, parse, is_valid_number
+from phonenumbers.phonenumberutil import NumberParseException
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -5,6 +7,7 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 from ..models import Appointment, Salon, Master, Service, Client, PromoCode
 from django.core.exceptions import ValidationError
+from ..forms.client import ClientForm
 from ..utils.validators import (
     validate_future_date,
     validate_working_hours,
@@ -283,11 +286,19 @@ def api_create_appointment(request):
                 "name",
             ]
 
+            # Проверяем наличие всех обязательных полей
+            missing_fields = []
             for field in required_fields:
                 if field not in data and field not in appointment_data:
-                    return JsonResponse(
-                        {"error": f"Missing field: {field}"}, status=400
-                    )
+                    missing_fields.append(field)
+
+            if missing_fields:
+                return JsonResponse(
+                    {
+                        "error": f"Отсутствуют обязательные поля: {', '.join(missing_fields)}"
+                    },
+                    status=400,
+                )
 
             try:
                 salon = Salon.objects.get(
@@ -305,6 +316,51 @@ def api_create_appointment(request):
             phone = data.get("phone")
             name = data.get("name")
 
+            form_data = {
+                "phone": phone,
+                "name": name,
+                "email": data.get("email", "")
+                }
+            form = ClientForm(form_data)
+
+            if not form.is_valid():
+                errors = form.errors.as_data()
+                if errors:
+                    for field, error_list in errors.items():
+                        first_error = error_list[0]
+                        return JsonResponse({"error": str(first_error)}, status=400)
+                else:
+                    return JsonResponse({"error": "Неверные данные"}, status=400)
+
+            # Если валидация прошла, используем очищенные данные
+            cleaned_data = form.cleaned_data
+            client, created = Client.objects.get_or_create(
+                phone=cleaned_data["phone"], 
+                defaults={
+                    "name": cleaned_data["name"],
+                    "email": cleaned_data["email"]
+                }
+            )
+
+            if not created and (client.name != cleaned_data["name"] or client.email != cleaned_data["email"]):
+                client.name = cleaned_data["name"]
+                client.email = cleaned_data["email"]
+                client.save()
+
+            if not phone or not name:
+                return JsonResponse({"error": "Не указаны телефон или имя"}, status=400)
+
+            try:
+                parsed_number = parse(phone, "RU")
+                if not is_valid_number(parsed_number):
+                    return JsonResponse(
+                        {"error": "Неверный номер телефона"}, status=400
+                    )
+
+                phone = format_number(parsed_number, PhoneNumberFormat.E164)
+            except NumberParseException:
+                return JsonResponse({"error": "Неверный формат телефона"}, status=400)
+
             client, created = Client.objects.get_or_create(
                 phone=phone, defaults={"name": name}
             )
@@ -313,13 +369,19 @@ def api_create_appointment(request):
                 client.name = name
                 client.save()
 
-            appointment_date = datetime.strptime(
-                data.get("date") or appointment_data.get("date"), "%Y-%m-%d"
-            ).date()
+            date_str = data.get("date") or appointment_data.get("date")
+            time_str = data.get("time") or appointment_data.get("time")
 
-            appointment_time = datetime.strptime(
-                data.get("time") or appointment_data.get("time"), "%H:%M"
-            ).time()
+            if not date_str or not time_str:
+                return JsonResponse({"error": "Не указаны дата или время"}, status=400)
+
+            try:
+                appointment_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+                appointment_time = datetime.strptime(time_str, "%H:%M").time()
+            except ValueError:
+                return JsonResponse(
+                    {"error": "Неверный формат даты или времени"}, status=400
+                )
 
             try:
                 validate_future_date(appointment_date)
@@ -328,6 +390,7 @@ def api_create_appointment(request):
             except ValidationError as e:
                 return JsonResponse({"error": str(e)}, status=400)
 
+            # Проверка на занятость времени у мастера
             existing_appointment = Appointment.objects.filter(
                 master=master,
                 appointment_date=appointment_date,
@@ -357,9 +420,6 @@ def api_create_appointment(request):
                     if promo.is_valid():
                         appointment.promo_code = promo
                         appointment.save()
-
-                        promo.used_count += 1
-                        promo.save()
                 except PromoCode.DoesNotExist:
                     pass
 
@@ -372,14 +432,23 @@ def api_create_appointment(request):
                     "appointment_id": appointment.id,
                     "appointment_number": f"#{appointment.id:05d}",
                     "message": "Запись успешно создана!",
+                    "client_name": client.name,
+                    "client_phone": str(client.phone),
+                    "appointment_date": appointment_date.strftime("%d.%m.%Y"),
+                    "appointment_time": appointment_time.strftime("%H:%M"),
+                    "service_name": service.name,
+                    "master_name": master.name,
+                    "salon_name": salon.name,
                 }
             )
         except json.JSONDecodeError:
-            return JsonResponse({"error": "Invalid JSON"}, status=400)
+            return JsonResponse({"error": "Неверный формат JSON"}, status=400)
         except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
+            return JsonResponse(
+                {"error": f"Внутренняя ошибка сервера: {str(e)}"}, status=500
+            )
 
-    return JsonResponse({"error": "Method not allowed"}, status=405)
+    return JsonResponse({"error": "Метод не разрешен"}, status=405)
 
 
 @csrf_exempt

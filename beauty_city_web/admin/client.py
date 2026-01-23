@@ -1,7 +1,10 @@
 from django.contrib import admin
+from ..forms.client import ClientForm
 
 
 class ClientAdmin(admin.ModelAdmin):
+    form = ClientForm
+    
     list_display = ("name", "phone", "email", "registration_date", "appointments_count")
     search_fields = ("name", "phone", "email")
 
