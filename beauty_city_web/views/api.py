@@ -547,12 +547,28 @@ def api_contact_request(request):
             question = data.get("question", "")
             terms_agreed = data.get("terms_agreed")
 
-            # Валидация
-            if not name or not phone:
-                return JsonResponse(
-                    {"success": False, "error": "Имя и телефон обязательны"},
-                    status=400,
-                )
+            # Валидация через ClientForm
+            form_data = {
+                "phone": phone,
+                "name": name,
+                "email": "",
+            }
+            form = ClientForm(form_data)
+
+            if not form.is_valid():
+                errors = form.errors.as_data()
+                if errors:
+                    for field, error_list in errors.items():
+                        first_error = error_list[0]
+                        return JsonResponse(
+                            {"success": False, "error": str(first_error)},
+                            status=400,
+                        )
+                else:
+                    return JsonResponse(
+                        {"success": False, "error": "Неверные данные"},
+                        status=400,
+                    )
 
             if not terms_agreed:
                 return JsonResponse(
@@ -563,16 +579,36 @@ def api_contact_request(request):
                     status=400,
                 )
 
-            # Создаем или получаем клиента
+            # Проверка телефона через phonenumbers
+            try:
+                parsed_number = parse(phone, "RU")
+                if not is_valid_number(parsed_number):
+                    return JsonResponse(
+                        {"success": False, "error": "Неверный номер телефона"},
+                        status=400,
+                    )
+                phone = format_number(parsed_number, PhoneNumberFormat.E164)
+            except NumberParseException:
+                return JsonResponse(
+                    {"success": False, "error": "Неверный формат телефона"},
+                    status=400,
+                )
+
+            cleaned_data = form.cleaned_data
+
             client, created = Client.objects.get_or_create(
-                phone=phone, defaults={"name": name}
+                phone=phone,
+                defaults={"name": cleaned_data["name"], "email": cleaned_data["email"]},
             )
 
-            if not created and client.name != name:
-                client.name = name
+            if not created and (
+                client.name != cleaned_data["name"]
+                or client.email != cleaned_data["email"]
+            ):
+                client.name = cleaned_data["name"]
+                client.email = cleaned_data["email"]
                 client.save()
 
-            # Создаем консультацию
             from ..models import Consultation
 
             consultation = Consultation.objects.create(
