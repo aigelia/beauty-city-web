@@ -9,7 +9,7 @@ class Client(models.Model):
     """Модель клиента"""
 
     phone = PhoneNumberField(
-        unique=True,
+        unique=False,
         verbose_name="Телефон",
         region="RU",
     )

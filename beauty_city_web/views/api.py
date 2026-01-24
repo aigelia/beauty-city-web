@@ -596,18 +596,10 @@ def api_contact_request(request):
 
             cleaned_data = form.cleaned_data
 
-            client, created = Client.objects.get_or_create(
+            client, created = Client.objects.update_or_create(
                 phone=phone,
-                defaults={"name": cleaned_data["name"], "email": cleaned_data["email"]},
+                defaults={"name": cleaned_data["name"]},
             )
-
-            if not created and (
-                client.name != cleaned_data["name"]
-                or client.email != cleaned_data["email"]
-            ):
-                client.name = cleaned_data["name"]
-                client.email = cleaned_data["email"]
-                client.save()
 
             from ..models import Consultation
 
