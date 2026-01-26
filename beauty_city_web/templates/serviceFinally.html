@@ -170,7 +170,7 @@
 							window.location.href = '{% url "beauty_city_web:index" %}';
 						}, 2000);
 					} else {
-						$message.html('<div style="color: red; font-weight: bold;">' + response.error + '</div>').show();
+						$message.html('<div style="color: red; font-weight: bold;">' + response.message + '</div>').show();
 						$button.prop('disabled', false).text('Записаться');
 					}
 				},
