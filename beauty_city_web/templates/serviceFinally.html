@@ -73,7 +73,7 @@
 									</div>
 								</div>
 								
-								<textarea name="question" id="clientQuestion" class="contacts__form_textarea" placeholder="Вопрос(необязательно)"></textarea>
+								<input type="text" name="promocode" id="promoCode" class="contacts__form_iunput" placeholder="Промкод">
 								<div class="contacts__form_checkboxBlock fic">
 									<input type="checkbox" id="termsAgreed" class="contacts__form_checkbox" checked required>
 									<span class="contacts__form_checkboxBlock__intro">Я согласен(а) с политикой конфиденциальности</span>
@@ -126,7 +126,7 @@
 			var formData = {
 				name: $('#clientName').val(),
 				phone: $('#clientPhone').val(),
-				question: $('#clientQuestion').val(),
+				promocode: $('#promoCode').val(),
 				terms_agreed: $('#termsAgreed').is(':checked')
 			};
 			
