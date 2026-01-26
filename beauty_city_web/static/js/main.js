@@ -393,6 +393,10 @@ $(document).ready(function() {
 		e.preventDefault()
 		$('#tipsModal').arcticmodal();
 	})
+	$('.telephoneAppointmentOpen').click(function(e) {
+		e.preventDefault()
+		$('#appointmentModal').arcticmodal();
+	})
 	
 	$('.authPopup__form').submit(function() {
 		$('#confirmModal').arcticmodal();

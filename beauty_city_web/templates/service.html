@@ -4,7 +4,8 @@
 	{% block head %}
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css" integrity="sha512-yHknP1/AwR+yx26cB1y0cjvQUMvEa2PFzt1c9LlS4pRQ5NOTZFWbhBig+X9G9eYW/8m0/4OXNx8pxJ6z57x0dw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css" integrity="sha512-17EgCFERpgZKcm0j0fEq1YCJuyAWdz9KUtv1EjVuaOz8pDnh/0nZxmU6BBXwaaxqoi9PQXnRWqlcDB027hgv9A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-<!-- 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css.map">
+	<link rel="stylesheet" href={% static "css/jquery.arcticmodal-0.3.css" %}>
+	<!-- 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css.map">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css.map"> -->
 	<link rel="stylesheet" href={% static "css/air-datepicker.css" %}>
 	<script src={% static "js/air-datepicker.js" %}></script>
@@ -20,7 +21,7 @@
 				</div>
 				<div class="service__block">
 					<h1 class="service__title">Запись на услугу</h1>
-					<button class="service__btn btn">Запись по телефону</button>
+					<button class="service__btn btn telephoneAppointmentOpen">Запись по телефону</button>
 				</div>
 				<form action="#" class="service__form">
 					<!-- <select name="selectSalon" id="" class="service__form_select">
@@ -182,5 +183,17 @@
 		</div>
 	</section>
 	{% endblock content %}
+	{% block popups %}
+	<div style="display: none;">
+		<div class="box-modal tipsPopup popup" style="width: 500px;" id="appointmentModal">
+			<div class="box-modal_close arcticmodal-close"><img src="{% static "img/x.svg" %}" alt="x"></div>
+			<div class="popup__title reviewPopup__title" style="padding-left: 40px;">Номер для записи</div>
+			<a href="tel:+79179023800" class="contacts__info_tel" style="padding-left: 135px;">+7 (917) 902 38 00</a>
+		</div>
+	</div>
+	{% endblock popups %}
+	{% block scripts %}
+	<script src={% static "js/jquery.arcticmodal-0.3.min.js" %}></script>
+	{% endblock scripts %}
 </body>
 </html>
