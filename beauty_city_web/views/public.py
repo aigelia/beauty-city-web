@@ -1,3 +1,4 @@
+from django.contrib.auth.decorators import user_passes_test
 from django.shortcuts import render, redirect
 from django.conf import settings
 from ..models import Salon, Service, Master, Review
@@ -104,3 +105,8 @@ def service_finally(request):
     }
 
     return render(request, "serviceFinally.html", context)
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def admin_page(request):
+    return render(request, "admin.html")

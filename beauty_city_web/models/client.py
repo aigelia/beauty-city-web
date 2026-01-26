@@ -45,8 +45,8 @@ class Client(models.Model):
         """
         queryset = cls.objects.all()
 
+        today = date.today()
         if period:
-            today = date.today()
 
             if period == "today":
                 queryset = queryset.filter(registration_date__date=today)
