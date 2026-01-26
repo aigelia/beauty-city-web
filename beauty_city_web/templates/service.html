@@ -212,399 +212,486 @@
 	<script src="{% static 'js/jquery.arcticmodal-0.3.min.js' %}"></script>
 	
 	<script>
-	$(document).ready(function() {
-	    console.log('=== Страница записи загружена ===');
-	    console.log('jQuery версия:', $.fn.jquery);
-	
-	    var DEFAULT_AVATAR_URL = '/static/img/avatars/default.svg';
+$(document).ready(function() {
+    console.log('=== Страница записи загружена ===');
     
-    		// Форматирование даты
-    		function formatDate(dateString) {
-    		    var date = new Date(dateString);
-    		    var options = { 
-    		        weekday: 'long', 
-    		        year: 'numeric', 
-    		        month: 'long', 
-    		        day: 'numeric' 
-    		    };
-    		    return date.toLocaleDateString('ru-RU', options);
-    		}
-			
-    		// Функция валидации даты и времени
-    		function validateDateTime(selectedDate, selectedTime) {
-    		    if (!selectedDate || !selectedTime) return false;
-				
-    		    var now = new Date();
-    		    var selectedDateTime = new Date(selectedDate + 'T' + selectedTime + ':00');
-				
-    		    // Проверка, что время не в прошлом
-    		    if (selectedDateTime < now) {
-    		        alert('Нельзя записаться на прошедшее время');
-    		        return false;
-    		    }
-					
-    		    // Проверка на сегодня - минимум через час
-    		    var today = new Date();
-    		    today.setHours(0, 0, 0, 0);
-    		    var selectedDateOnly = new Date(selectedDate);
-    		    selectedDateOnly.setHours(0, 0, 0, 0);
-					
-    		    if (selectedDateOnly.getTime() === today.getTime()) {
-    		        var oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
-    		        if (selectedDateTime < oneHourLater) {
-    		            alert('При записи на сегодня минимальное время через 1 час');
-    		            return false;
-    		        }
-    		    }
-					
-    		    // Проверка рабочего времени (10:00-19:00 с шагом 30 минут)
-    		    var hour = parseInt(selectedTime.split(':')[0]);
-    		    var minute = parseInt(selectedTime.split(':')[1]);
-					
-    		    if (hour < 10 || hour > 19) {
-    		        alert('Время должно быть с 10:00 до 19:00');
-    		        return false;
-    		    }
-					
-    		    if (minute !== 0 && minute !== 30) {
-    		        alert('Время должно быть с шагом 30 минут (например: 10:00, 10:30)');
-    		        return false;
-    		    }
-					
-    		    if (hour === 19 && minute > 0) {
-    		        alert('Последнее доступное время - 19:00');
-    		        return false;
-    		    }
-					
-    		    return true;
-    		}
-			
-    		$(document).on('click', '.accordion', function(e) {
-    		    e.stopPropagation();
-    		    $(this).toggleClass("active");
-    		    $(this).next(".panel").slideToggle(200);
-    		});
-			
-    		$('.service__salons .accordion').on('click', function() {
-    		    if ($('.service__salons .panel').is(':visible') && !$(this).hasClass('loaded')) {
-    		        loadSalons();
-    		        $(this).addClass('loaded');
-    		    }
-    		});
-			
-    		$('.service__services .accordion').on('click', function() {
-    		    if ($('.service__services .panel').is(':visible') && !$(this).hasClass('loaded')) {
-    		        loadServices();
-    		        $(this).addClass('loaded');
-    		    }
-    		});
-			
-    		$('.service__masters .accordion').on('click', function() {
-    		    if ($('.service__masters .panel').is(':visible') && !$(this).hasClass('loaded')) {
-    		        loadMasters();
-    		        $(this).addClass('loaded');
-    		    }
-    		});
-			
-    		function loadSalons() {
-    		    console.log('Загрузка салонов...');
-    		    $.ajax({
-    		        url: '/api/salons/',
-    		        type: 'GET',
-    		        success: function(data) {
-    		            console.log('Салонов загружено:', data.salons.length);
-    		            var $panel = $('.service__salons .panel');
-    		            $panel.empty();
-								
-    		            data.salons.forEach(function(salon) {
-    		                var $salonBlock = $(
-    		                    '<div class="accordion__block fic">' +
-    		                    '<div class="accordion__block_intro">' + salon.name + '</div>' +
-    		                    '<div class="accordion__block_address">' + salon.address + '</div>' +
-    		                    '</div>'
-    		                );
-														
-    		                $salonBlock.on('click', function() {
-    		                    console.log('Выбран салон:', salon.name);
-    		                    // Сохраняем выбранный салон
-    		                    $('.service__salons .accordion').text(salon.name);
-    		                    $('.service__salons .accordion').data('salon-id', salon.id);
-												
-    		                    // Закрываем панель
-    		                    $('.service__salons .accordion').removeClass('active');
-    		                    $panel.slideUp(200);
-												
-    		                    // Загружаем услуги для этого салона
-    		                    loadServices(salon.id);
-    		                });
-											
-    		                $panel.append($salonBlock);
-    		            });
-    		        },
-    		        error: function(error) {
-    		            console.error('Ошибка загрузки салонов:', error);
-    		            alert('Не удалось загрузить список салонов');
-    		        }
-    		    });
-    		}
-			
-    		// Функция загрузки услуг
-    		function loadServices(salonId) {
-    		    var url = '/api/services/';
-    		    if (salonId) {
-    		        url += '?salon_id=' + salonId;
-    		    }
-					
-    		    console.log('Загрузка услуг, URL:', url);
-					
-    		    $.ajax({
-    		        url: url,
-    		        type: 'GET',
-    		        success: function(data) {
-    		            console.log('Категорий услуг загружено:', data.categories.length);
-    		            var $panel = $('.service__services .panel');
-    		            $panel.empty();
-								
-    		            if (data.categories.length === 0) {
-    		                $panel.html('<div class="accordion__block">Нет доступных услуг в этом салоне</div>');
-    		                return;
-    		            }
-									
-    		            data.categories.forEach(function(category) {
-    		                var $categoryBtn = $(
-    		                    '<button class="accordion" type="button">' + category.name + '</button>'
-    		                );
-										
-    		                var $categoryPanel = $('<div class="panel" style="display: none;"></div>');
-										
-    		                category.services.forEach(function(service) {
-    		                    var $serviceItem = $(
-    		                        '<div class="accordion__block_item fic">' +
-    		                        '<div class="accordion__block_item_intro">' + service.name + '</div>' +
-    		                        '<div class="accordion__block_item_address">' + service.price + ' ₽</div>' +
-    		                        '</div>'
-    		                    );
-																
-    		                    $serviceItem.on('click', function(e) {
-    		                        e.stopPropagation();
-														
-    		                        // Сохраняем выбранную услугу
-    		                        $('.service__services .accordion').text(service.name);
-    		                        $('.service__services .accordion').data('service-id', service.id);
-    		                        $('.service__services .accordion').data('service-price', service.price);
-														
-    		                        // Закрываем все аккордеоны услуг
-    		                        $('.service__services .accordion').removeClass('active');
-    		                        $('.service__services .panel').slideUp(200);
-														
-    		                        // Загружаем мастеров для этой услуги
-    		                        var salonId = $('.service__salons .accordion').data('salon-id');
-    		                        if (salonId) {
-    		                            loadMasters(salonId, service.id);
-    		                        } else {
-    		                            alert('Сначала выберите салон');
-    		                        }
-    		                    });
-													
-    		                    $categoryPanel.append($serviceItem);
-    		                });
-											
-    		                $panel.append($categoryBtn);
-    		                $panel.append($categoryPanel);
-    		            });
-    		        },
-    		        error: function(error) {
-    		            console.error('Ошибка загрузки услуг:', error);
-    		            alert('Не удалось загрузить список услуг');
-    		        }
-    		    });
-    		}
-			
-    		// Функция загрузки мастеров
-    		function loadMasters(salonId, serviceId) {
-    		    if (!salonId) {
-    		        console.error('salonId не определен');
-    		        alert('Сначала выберите салон');
-    		        return;
-    		    }
-					
-    		    var url = '/api/masters/';
-    		    var params = [];
-					
-    		    if (salonId) params.push('salon_id=' + salonId);
-    		    if (serviceId) params.push('service_id=' + serviceId);
-					
-    		    if (params.length > 0) {
-    		        url += '?' + params.join('&');
-    		    }
-					
-    		    console.log('Загрузка мастеров, URL:', url);
-					
-    		    $.ajax({
-    		        url: url,
-    		        type: 'GET',
-    		        success: function(data) {
-    		            console.log('Мастеров загружено:', data.masters.length);
-    		            var $panel = $('.service__masters .panel');
-    		            $panel.empty();
-								
-    		            if (data.masters.length === 0) {
-    		                $panel.html('<div class="accordion__block">Нет доступных мастеров для этой услуги в выбранном салоне</div>');
-    		                return;
-    		            }
-									
-    		            data.masters.forEach(function(master) {
-    		                var photoUrl = master.photo_url || DEFAULT_AVATAR_URL;
-    		                var $masterBlock = $(
-    		                    '<div class="accordion__block fic">' +
-    		                    '<img src="' + photoUrl + '" alt="' + master.name + '" class="accordion__block_img" onerror="this.src=\'' + DEFAULT_AVATAR_URL + '\'">' +
-    		                    '<div>' +
-    		                    '<div class="accordion__block_master">' + master.name + '</div>' +
-    		                    '<div style="font-size: 12px; color: #666;">' + master.specialty + '</div>' +
-    		                    '</div>' +
-    		                    '</div>'
-    		                );
-														
-    		                $masterBlock.on('click', function() {
-    		                    $('.service__masters .accordion').text(master.name);
-    		                    $('.service__masters .accordion').data('master-id', master.id);
-												
-    		                    $('.service__masters .accordion').removeClass('active');
-    		                    $panel.slideUp(200);
-												
-    		                    $('#selectedDateInfo').show();
-    		                    $('#selectedDateText').text('(выберите дату выше)');
-												
-    		                    console.log('Выбран мастер:', master.name);
-    		                });
-											
-    		                $panel.append($masterBlock);
-    		            });
-    		        },
-    		        error: function(error) {
-    		            console.error('Ошибка загрузки мастеров:', error);
-    		            alert('Не удалось загрузить список мастеров');
-    		        }
-    		    });
-    		}
-			
-    		$('#appointmentDate').on('change', function() {
-    		    var selectedDate = $(this).val();
-    		    if (selectedDate) {
-    		        $('#selectedDateText').text(formatDate(selectedDate));
-    		        $('#selectedDateInfo').show();
-    		        console.log('Выбрана дата:', selectedDate);
-						
-    		        $('.time__elems_btn').removeClass('active selected');
-    		    }
-    		});
-			
-    		$(document).on('click', '.time__elems_btn', function() {
-    		    var selectedDate = $('#appointmentDate').val();
-    		    var selectedTime = $(this).data('time');
-				
-    		    if (!selectedDate) {
-    		        alert('Сначала выберите дату');
-    		        return;
-    		    }
-					
-    		    if (!validateDateTime(selectedDate, selectedTime)) {
-    		        $('.time__elems_btn').removeClass('active selected');
-    		        return;
-    		    }
-					
-    		    $('.time__elems_btn').removeClass('active selected');
-    		    $(this).addClass('active selected');
-					
-    		    console.log('Выбрано время:', selectedTime, 'на дату:', selectedDate);
-    		});
-			
-    		$('.time__btns_next').on('click', function() {
-    		    console.log('Нажата кнопка "Далее"');
-				
-    		    // Собираем данные
-    		    var salonId = $('.service__salons .accordion').data('salon-id');
-    		    var serviceId = $('.service__services .accordion').data('service-id');
-    		    var masterId = $('.service__masters .accordion').data('master-id');
-    		    var selectedDate = $('#appointmentDate').val();
-    		    var selectedTime = $('.time__elems_btn.selected').data('time');
-				
-    		    console.log('Проверка данных записи:');
-    		    console.log('- salonId:', salonId);
-    		    console.log('- serviceId:', serviceId);
-    		    console.log('- masterId:', masterId);
-    		    console.log('- selectedDate:', selectedDate);
-    		    console.log('- selectedTime:', selectedTime);
-				
-    		    // Валидация через нашу функцию
-    		    if (!validateDateTime(selectedDate, selectedTime)) {
-    		        return;
-    		    }
-					
-    		    // Проверка заполнения всех полей
-    		    var missing = [];
-    		    if (!salonId) missing.push('салон');
-    		    if (!serviceId) missing.push('услуга');
-    		    if (!masterId) missing.push('мастер');
-    		    if (!selectedDate) missing.push('дата');
-    		    if (!selectedTime) missing.push('время');
-					
-    		    if (missing.length > 0) {
-    		        alert('Пожалуйста, заполните все поля. Отсутствует: ' + missing.join(', '));
-    		        return;
-    		    }
-					
-    		    // Сохраняем данные в сессии
-    		    $.ajax({
-    		        url: '/api/save-appointment/',
-    		        type: 'POST',
-    		        contentType: 'application/json',
-    		        data: JSON.stringify({
-    		            salon_id: salonId,
-    		            service_id: serviceId,
-    		            master_id: masterId,
-    		            date: selectedDate,
-    		            time: selectedTime
-    		        }),
-    		        success: function(response) {
-    		            if (response.success) {
-    		                // Перенаправляем на страницу подтверждения
-    		                window.location.href = response.redirect_url || '{% url "beauty_city_web:service_finally" %}';
-    		            } else {
-    		                alert('Ошибка: ' + (response.error || 'Неизвестная ошибка при сохранении записи'));
-    		            }
-    		        },
-    		        error: function(error) {
-    		            console.error('Ошибка сохранения записи:', error);
-    		            if (error.status === 404) {
-    		                // Если endpoint не найден, все равно переходим на следующую страницу
-    		                alert('Запись сохранена. Переход на страницу подтверждения...');
-    		                window.location.href = '{% url "beauty_city_web:service_finally" %}';
-    		            } else {
-    		                alert('Ошибка при сохранении записи. Пожалуйста, попробуйте еще раз.');
-    		            }
-    		        }
-    		    });
-    		});
-			
-    		// Обработчик кнопки "На главную"
-    		$('.time__btns_home').on('click', function() {
-    		    window.location.href = '{% url "beauty_city_web:index" %}';
-    		});
-			
-    		// Обработчик для кнопки "Запись по телефону"
-    		$('.telephoneAppointmentOpen').on('click', function() {
-    		    $('#appointmentModal').arcticmodal();
-    		});
-			
-    		// Устанавливаем минимальную дату (сегодня)
-    		var today = new Date().toISOString().split('T')[0];
-    		$('#appointmentDate').attr('min', today);
-    		$('#appointmentDate').val(today);
-    		$('#selectedDateText').text(formatDate(today));
-    		$('#selectedDateInfo').show();
-		});
-	</script>
+    var DEFAULT_AVATAR_URL = '/static/img/avatars/default.svg';
+    var selectedData = {
+        salon: null,
+        service: null,
+        master: null,
+        date: null,
+        time: null
+    };
+    
+    // Форматирование даты
+    function formatDate(dateString) {
+        var date = new Date(dateString);
+        var options = { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        };
+        return date.toLocaleDateString('ru-RU', options);
+    }
+
+    // Функция валидации даты и времени
+    function validateDateTime(selectedDate, selectedTime) {
+        if (!selectedDate || !selectedTime) return false;
+        
+        var now = new Date();
+        var selectedDateTime = new Date(selectedDate + 'T' + selectedTime + ':00');
+        
+        // Проверка, что время не в прошлом
+        if (selectedDateTime < now) {
+            alert('Нельзя записаться на прошедшее время');
+            return false;
+        }
+        
+        // Проверка на сегодня - минимум через час
+        var today = new Date();
+        today.setHours(0, 0, 0, 0);
+        var selectedDateOnly = new Date(selectedDate);
+        selectedDateOnly.setHours(0, 0, 0, 0);
+        
+        if (selectedDateOnly.getTime() === today.getTime()) {
+            var oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+            if (selectedDateTime < oneHourLater) {
+                alert('При записи на сегодня минимальное время через 1 час');
+                return false;
+            }
+        }
+        
+        // Проверка рабочего времени (10:00-19:00 с шагом 30 минут)
+        var hour = parseInt(selectedTime.split(':')[0]);
+        var minute = parseInt(selectedTime.split(':')[1]);
+        
+        if (hour < 10 || hour > 19) {
+            alert('Время должно быть с 10:00 до 19:00');
+            return false;
+        }
+        
+        if (minute !== 0 && minute !== 30) {
+            alert('Время должно быть с шагом 30 минут (например: 10:00, 10:30)');
+            return false;
+        }
+        
+        if (hour === 19 && minute > 0) {
+            alert('Последнее доступное время - 19:00');
+            return false;
+        }
+        
+        return true;
+    }
+    
+    // Функция для фильтрации опций
+    function filterOptions() {
+        console.log('Фильтрация опций с данными:', selectedData);
+        
+        // Если выбран мастер, фильтруем салоны и услуги по мастеру
+        if (selectedData.master) {
+            loadSalons({ master_id: selectedData.master.id });
+            loadServices({ 
+                master_id: selectedData.master.id,
+                salon_id: selectedData.salon ? selectedData.salon.id : null
+            });
+        }
+        // Если выбран салон, фильтруем мастеров и услуги по салону
+        else if (selectedData.salon) {
+            loadMasters({ salon_id: selectedData.salon.id });
+            loadServices({ salon_id: selectedData.salon.id });
+        }
+        // Если выбрана услуга, фильтруем мастеров и салоны по услуге
+        else if (selectedData.service) {
+            loadMasters({ service_id: selectedData.service.id });
+            loadSalons({ service_id: selectedData.service.id });
+        }
+        // Если ничего не выбрано, загружаем все
+        else {
+            loadSalons();
+            loadServices();
+            loadMasters();
+        }
+    }
+    
+    // Функция обновления текста кнопок
+    function updateButtonTexts() {
+        if (selectedData.salon) {
+            $('.service__salons .accordion').text(selectedData.salon.name);
+        } else {
+            $('.service__salons .accordion').text('(Выберите салон)');
+        }
+        
+        if (selectedData.service) {
+            $('.service__services .accordion').text(selectedData.service.name);
+        } else {
+            $('.service__services .accordion').text('(Выберите услугу)');
+        }
+        
+        if (selectedData.master) {
+            $('.service__masters .accordion').text(selectedData.master.name);
+        } else {
+            $('.service__masters .accordion').text('(Выберите мастера)');
+        }
+    }
+    
+    // Обработчики аккордеонов
+    $(document).on('click', '.accordion', function(e) {
+        e.stopPropagation();
+        $(this).toggleClass("active");
+        $(this).next(".panel").slideToggle(200);
+    });
+
+    $('.service__salons .accordion').on('click', function() {
+        if ($('.service__salons .panel').is(':visible') && !$(this).hasClass('loaded')) {
+            var params = {};
+            if (selectedData.master) params.master_id = selectedData.master.id;
+            if (selectedData.service) params.service_id = selectedData.service.id;
+            loadSalons(params);
+            $(this).addClass('loaded');
+        }
+    });
+
+    $('.service__services .accordion').on('click', function() {
+        if ($('.service__services .panel').is(':visible') && !$(this).hasClass('loaded')) {
+            var params = {};
+            if (selectedData.master) params.master_id = selectedData.master.id;
+            if (selectedData.salon) params.salon_id = selectedData.salon.id;
+            loadServices(params);
+            $(this).addClass('loaded');
+        }
+    });
+
+    $('.service__masters .accordion').on('click', function() {
+        if ($('.service__masters .panel').is(':visible') && !$(this).hasClass('loaded')) {
+            var params = {};
+            if (selectedData.salon) params.salon_id = selectedData.salon.id;
+            if (selectedData.service) params.service_id = selectedData.service.id;
+            loadMasters(params);
+            $(this).addClass('loaded');
+        }
+    });
+
+    // Функция загрузки салонов с фильтрацией
+    function loadSalons(params = {}) {
+        console.log('Загрузка салонов с параметрами:', params);
+        
+        var url = '/api/salons/';
+        var queryParams = [];
+        
+        if (params.master_id) queryParams.push('master_id=' + params.master_id);
+        if (params.service_id) queryParams.push('service_id=' + params.service_id);
+        
+        if (queryParams.length > 0) {
+            url += '?' + queryParams.join('&');
+        }
+        
+        $.ajax({
+            url: url,
+            type: 'GET',
+            success: function(data) {
+                console.log('Салонов загружено:', data.salons.length);
+                var $panel = $('.service__salons .panel');
+                $panel.empty();
+                
+                if (data.salons.length === 0) {
+                    $panel.html('<div class="accordion__block">Нет доступных салонов по выбранным критериям</div>');
+                    return;
+                }
+                
+                data.salons.forEach(function(salon) {
+                    var $salonBlock = $(
+                        '<div class="accordion__block fic">' +
+                        '<div class="accordion__block_intro">' + salon.name + '</div>' +
+                        '<div class="accordion__block_address">' + salon.address + '</div>' +
+                        '</div>'
+                    );
+                    
+                    $salonBlock.on('click', function() {
+                        console.log('Выбран салон:', salon.name);
+                        
+                        // Сохраняем выбранный салон
+                        selectedData.salon = {
+                            id: salon.id,
+                            name: salon.name,
+                            address: salon.address
+                        };
+                        
+                        updateButtonTexts();
+                        $('.service__salons .accordion').removeClass('active');
+                        $panel.slideUp(200);
+                        
+                        // Фильтруем другие опции
+                        filterOptions();
+                    });
+                    
+                    $panel.append($salonBlock);
+                });
+            },
+            error: function(error) {
+                console.error('Ошибка загрузки салонов:', error);
+                alert('Не удалось загрузить список салонов');
+            }
+        });
+    }
+
+    // Функция загрузки услуг с фильтрацией
+    function loadServices(params = {}) {
+        console.log('Загрузка услуг с параметрами:', params);
+        
+        var url = '/api/services/';
+        var queryParams = [];
+        
+        if (params.salon_id) queryParams.push('salon_id=' + params.salon_id);
+        if (params.master_id) queryParams.push('master_id=' + params.master_id);
+        
+        if (queryParams.length > 0) {
+            url += '?' + queryParams.join('&');
+        }
+        
+        $.ajax({
+            url: url,
+            type: 'GET',
+            success: function(data) {
+                console.log('Категорий услуг загружено:', data.categories.length);
+                var $panel = $('.service__services .panel');
+                $panel.empty();
+                
+                if (data.categories.length === 0) {
+                    $panel.html('<div class="accordion__block">Нет доступных услуг по выбранным критериям</div>');
+                    return;
+                }
+                
+                data.categories.forEach(function(category) {
+                    var $categoryBtn = $(
+                        '<button class="accordion" type="button">' + category.name + '</button>'
+                    );
+                    
+                    var $categoryPanel = $('<div class="panel" style="display: none;"></div>');
+                    
+                    category.services.forEach(function(service) {
+                        var $serviceItem = $(
+                            '<div class="accordion__block_item fic">' +
+                            '<div class="accordion__block_item_intro">' + service.name + '</div>' +
+                            '<div class="accordion__block_item_address">' + service.price + ' ₽</div>' +
+                            '</div>'
+                        );
+                        
+                        $serviceItem.on('click', function(e) {
+                            e.stopPropagation();
+                            
+                            // Сохраняем выбранную услугу
+                            selectedData.service = {
+                                id: service.id,
+                                name: service.name,
+                                price: service.price
+                            };
+                            
+                            updateButtonTexts();
+                            $('.service__services .accordion').removeClass('active');
+                            $('.service__services .panel').slideUp(200);
+                            
+                            // Фильтруем другие опции
+                            filterOptions();
+                        });
+                        
+                        $categoryPanel.append($serviceItem);
+                    });
+                    
+                    $panel.append($categoryBtn);
+                    $panel.append($categoryPanel);
+                });
+            },
+            error: function(error) {
+                console.error('Ошибка загрузки услуг:', error);
+                alert('Не удалось загрузить список услуг');
+            }
+        });
+    }
+
+    // Функция загрузки мастеров с фильтрацией
+    function loadMasters(params = {}) {
+        console.log('Загрузка мастеров с параметрами:', params);
+        
+        var url = '/api/masters/';
+        var queryParams = [];
+        
+        if (params.salon_id) queryParams.push('salon_id=' + params.salon_id);
+        if (params.service_id) queryParams.push('service_id=' + params.service_id);
+        
+        if (queryParams.length > 0) {
+            url += '?' + queryParams.join('&');
+        }
+        
+        $.ajax({
+            url: url,
+            type: 'GET',
+            success: function(data) {
+                console.log('Мастеров загружено:', data.masters.length);
+                var $panel = $('.service__masters .panel');
+                $panel.empty();
+                
+                if (data.masters.length === 0) {
+                    $panel.html('<div class="accordion__block">Нет доступных мастеров по выбранным критериям</div>');
+                    return;
+                }
+                
+                data.masters.forEach(function(master) {
+                    var photoUrl = master.photo_url || DEFAULT_AVATAR_URL;
+                    var $masterBlock = $(
+                        '<div class="accordion__block fic">' +
+                        '<img src="' + photoUrl + '" alt="' + master.name + '" class="accordion__block_img" onerror="this.src=\'' + DEFAULT_AVATAR_URL + '\'">' +
+                        '<div>' +
+                        '<div class="accordion__block_master">' + master.name + '</div>' +
+                        '<div style="font-size: 12px; color: #666;">' + master.specialty + '</div>' +
+                        '</div>' +
+                        '</div>'
+                    );
+                    
+                    $masterBlock.on('click', function() {
+                        // Сохраняем выбранного мастера
+                        selectedData.master = {
+                            id: master.id,
+                            name: master.name,
+                            photo_url: photoUrl,
+                            specialty: master.specialty
+                        };
+                        
+                        updateButtonTexts();
+                        $('.service__masters .accordion').removeClass('active');
+                        $panel.slideUp(200);
+
+                        $('#selectedDateInfo').show();
+                        $('#selectedDateText').text('(выберите дату выше)');
+                        
+                        console.log('Выбран мастер:', master.name);
+                        
+                        // Фильтруем другие опции
+                        filterOptions();
+                    });
+                    
+                    $panel.append($masterBlock);
+                });
+            },
+            error: function(error) {
+                console.error('Ошибка загрузки мастеров:', error);
+                alert('Не удалось загрузить список мастеров');
+            }
+        });
+    }
+
+    // Обработчики даты и времени
+    $('#appointmentDate').on('change', function() {
+        var selectedDate = $(this).val();
+        if (selectedDate) {
+            selectedData.date = selectedDate;
+            $('#selectedDateText').text(formatDate(selectedDate));
+            $('#selectedDateInfo').show();
+            console.log('Выбрана дата:', selectedDate);
+            
+            $('.time__elems_btn').removeClass('active selected');
+        }
+    });
+
+    $(document).on('click', '.time__elems_btn', function() {
+        var selectedDate = $('#appointmentDate').val();
+        var selectedTime = $(this).data('time');
+        
+        if (!selectedDate) {
+            alert('Сначала выберите дату');
+            return;
+        }
+        
+        if (!validateDateTime(selectedDate, selectedTime)) {
+            $('.time__elems_btn').removeClass('active selected');
+            return;
+        }
+        
+        selectedData.time = selectedTime;
+        $('.time__elems_btn').removeClass('active selected');
+        $(this).addClass('active selected');
+        
+        console.log('Выбрано время:', selectedTime, 'на дату:', selectedDate);
+    });
+
+    // Обработчик кнопки "Далее"
+    $('.time__btns_next').on('click', function() {
+        console.log('Нажата кнопка "Далее"');
+        console.log('Выбранные данные:', selectedData);
+        
+        // Проверка валидации даты и времени
+        if (!validateDateTime(selectedData.date, selectedData.time)) {
+            return;
+        }
+        
+        // Проверка заполнения всех полей
+        var missing = [];
+        if (!selectedData.salon) missing.push('салон');
+        if (!selectedData.service) missing.push('услуга');
+        if (!selectedData.master) missing.push('мастер');
+        if (!selectedData.date) missing.push('дата');
+        if (!selectedData.time) missing.push('время');
+        
+        if (missing.length > 0) {
+            alert('Пожалуйста, заполните все поля. Отсутствует: ' + missing.join(', '));
+            return;
+        }
+        
+        // Сохраняем данные в сессии
+        $.ajax({
+            url: '/api/save-appointment/',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                salon_id: selectedData.salon.id,
+                service_id: selectedData.service.id,
+                master_id: selectedData.master.id,
+                date: selectedData.date,
+                time: selectedData.time
+            }),
+            success: function(response) {
+                if (response.success) {
+                    window.location.href = response.redirect_url || '{% url "beauty_city_web:service_finally" %}';
+                } else {
+                    alert('Ошибка: ' + (response.error || 'Неизвестная ошибка при сохранении записи'));
+                }
+            },
+            error: function(error) {
+                console.error('Ошибка сохранения записи:', error);
+                if (error.status === 404) {
+                    alert('Запись сохранена. Переход на страницу подтверждения...');
+                    window.location.href = '{% url "beauty_city_web:service_finally" %}';
+                } else {
+                    alert('Ошибка при сохранении записи. Пожалуйста, попробуйте еще раз.');
+                }
+            }
+        });
+    });
+
+    // Обработчик кнопки "На главную"
+    $('.time__btns_home').on('click', function() {
+        window.location.href = '{% url "beauty_city_web:index" %}';
+    });
+
+    // Обработчик для кнопки "Запись по телефону"
+    $('.telephoneAppointmentOpen').on('click', function() {
+        $('#appointmentModal').arcticmodal();
+    });
+    
+    // Устанавливаем минимальную дату (сегодня)
+    var today = new Date().toISOString().split('T')[0];
+    $('#appointmentDate').attr('min', today);
+    $('#appointmentDate').val(today);
+    $('#selectedDateText').text(formatDate(today));
+    $('#selectedDateInfo').show();
+    
+    // Инициализация - загружаем все опции
+    loadSalons();
+    loadServices();
+    loadMasters();
+});
+</script>
 	{%endblock scripts %}
 </body>
 </html>
