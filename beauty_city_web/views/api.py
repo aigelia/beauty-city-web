@@ -455,9 +455,17 @@ def api_create_appointment(request):
             except Appointment.DoesNotExist:
                 pass
 
+            promo = None
             if promocode:
                 try:
                     promo = PromoCode.objects.get(code=promocode.upper(), is_active=True)
+                    if not promo.is_valid():
+                        return JsonResponse(
+                            {
+                                "success": False,
+                                "message": "Данный промокод недействителен",
+                            }
+                        )
                 except PromoCode.DoesNotExist:
                     return JsonResponse(
                             {
@@ -476,15 +484,16 @@ def api_create_appointment(request):
                 ).date(),
                 appointment_time=datetime.strptime(final_data["time"], "%H:%M").time(),
                 status="pending",
+                promo_code=promo,
                 original_price=service.price if service else 0,
                 final_price=service.price if service else 0,
             )
-            if promocode and promo:
-                appointment.promo_code = promo
-                appointment.save()
 
             if "appointment_data" in request.session:
                 del request.session["appointment_data"]
+
+            if "applied_promo_code" in request.session:
+                del request.session["applied_promo_code"]
 
             return JsonResponse(
                 {

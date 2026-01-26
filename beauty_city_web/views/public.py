@@ -1,9 +1,10 @@
 from django.contrib.auth.decorators import user_passes_test
 from django.shortcuts import render, redirect
 from django.conf import settings
-from ..models import Salon, Service, Master, Review
+from ..models import Salon, Service, Master, Review, PromoCode
 import json
 from datetime import datetime
+from decimal import Decimal
 
 
 def index(request):
@@ -55,6 +56,34 @@ def service_finally(request):
     salon = None
     service = None
     master = None
+    promo_code = None
+    promo_message = None
+    promo_error = None
+    original_price = None
+    final_price = None
+    discount_amount = None
+
+    # Обработка применения промокода
+    if request.method == "POST" and "apply_promo" in request.POST:
+        promo_code_input = request.POST.get("promocode", "").strip().upper()
+        if promo_code_input:
+            try:
+                promo = PromoCode.objects.get(code=promo_code_input, is_active=True)
+                if promo.is_valid():
+                    request.session["applied_promo_code"] = promo_code_input
+                    promo_message = "Промокод успешно применён!"
+                else:
+                    # Сбрасываем промокод, если новый невалидный
+                    if "applied_promo_code" in request.session:
+                        del request.session["applied_promo_code"]
+                    promo_error = "Промокод недействителен или истёк"
+            except PromoCode.DoesNotExist:
+                # Сбрасываем промокод, если новый не найден
+                if "applied_promo_code" in request.session:
+                    del request.session["applied_promo_code"]
+                promo_error = "Промокод не найден"
+        else:
+            promo_error = "Введите промокод"
 
     try:
         salon = Salon.objects.get(id=appointment_data.get("salon_id"))
@@ -70,6 +99,22 @@ def service_finally(request):
         master = Master.objects.get(id=appointment_data.get("master_id"))
     except Master.DoesNotExist:
         pass
+
+    # Расчет цены с учетом промокода
+    if service:
+        original_price = service.price
+        final_price = original_price
+
+        applied_promo_code = request.session.get("applied_promo_code")
+        if applied_promo_code:
+            try:
+                promo = PromoCode.objects.get(code=applied_promo_code, is_active=True)
+                if promo.is_valid():
+                    promo_code = promo
+                    discount_amount = promo.calculate_discount(original_price)
+                    final_price = original_price - discount_amount
+            except PromoCode.DoesNotExist:
+                pass
 
     date_str = appointment_data.get("date")
     formatted_date = ""
@@ -102,6 +147,12 @@ def service_finally(request):
         "date": date_str,
         "formatted_date": formatted_date,
         "time": appointment_data.get("time"),
+        "promo_code": promo_code,
+        "promo_message": promo_message,
+        "promo_error": promo_error,
+        "original_price": original_price,
+        "final_price": final_price,
+        "discount_amount": discount_amount,
     }
 
     return render(request, "serviceFinally.html", context)

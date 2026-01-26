@@ -22,60 +22,80 @@
 						<div class="service__block">
 							<h1 class="service__title">Запись на услугу</h1>
 						</div>
-						<form action="#" class="serviceFinally__form" id="appointmentForm">
-							<div class="serviceFinally__form_block">
-								<div class="serviceFinally__form_header fic">
-									<span class="serviceFinally__form_header__number">Запись №{% now "His" %}</span>
-									<div class="serviceFinally__form_header__item fic">
-										{% if salon %}
-											<div class="serviceFinally__form_header__service">{{ salon.name }}</div>
-											<div class="serviceFinally__form_header__address">{{ salon.address }}</div>
-										{% else %}
-											<div class="serviceFinally__form_header__service">BeautyCity Пушкинская</div>
-											<div class="serviceFinally__form_header__address">ул. Пушкинская, д. 78А</div>
-										{% endif %}
-									</div>
-								</div>
-								<div class="serviceFinally__form_content">
-									<div class="serviceFinally__form_content__block fic">
-										{% if service %}
-											<div class="serviceFinally__form_content__title">{{ service.name }}</div>
-											<div class="serviceFinally__form_content__price">{{ service.price }} ₽</div>
-										{% else %}
-											<div class="serviceFinally__form_content__title">Дневной макияж</div>
-											<div class="serviceFinally__form_content__price">750 ₽</div>
-										{% endif %}
-									</div>
-									<div class="serviceFinally__form_content__block fic">
-										<div class="serviceFinally__form_content__items fic">
-										  	{% if master and master.photo %}
-												<img src="{{ master.photo.url }}" alt="avatar" class="accordion__block_img">
-											{% else %}
-												<img src="{% static 'img/masters/avatar/vizajist1.svg' %}" alt="avatar" class="accordion__block_img">
-										  	{% endif %}
-										  	<div class="accordion__block_master">
-												{% if master %}{{ master.name }}{% else %}Елена Грибнова{% endif %}
-											</div>
-									    </div>
-									    <div class="serviceFinally__form_content__item fic">
-											<div class="serviceFinally__form_content__time">{{ appointment_data.time|default:"16:30" }}</div>
-											<div class="serviceFinally__form_content__date">{{ formatted_date|default:"18 ноября" }}</div>
-										</div>
-									</div>
-									
+						<div class="serviceFinally__form_block">
+							<div class="serviceFinally__form_header fic">
+								<span class="serviceFinally__form_header__number">Запись №{% now "His" %}</span>
+								<div class="serviceFinally__form_header__item fic">
+									{% if salon %}
+										<div class="serviceFinally__form_header__service">{{ salon.name }}</div>
+										<div class="serviceFinally__form_header__address">{{ salon.address }}</div>
+									{% else %}
+										<div class="serviceFinally__form_header__service">BeautyCity Пушкинская</div>
+										<div class="serviceFinally__form_header__address">ул. Пушкинская, д. 78А</div>
+									{% endif %}
 								</div>
 							</div>
-							<div class="serviceFinally__form_itesm">
-								<div class="contacts__form_block fic">
-									<input type="text" name="name" id="clientName" class="contacts__form_iunput" placeholder="Введите имя" required>
-									<div class="contacts__form_inputBlock">
-										<input type="text" name="phone" id="clientPhone" class="contacts__form_iunput" placeholder="+7(999)999-99-99" required>
+							<div class="serviceFinally__form_content">
+								<div class="serviceFinally__form_content__block fic">
+									{% if service %}
+										<div class="serviceFinally__form_content__title">{{ service.name }}</div>
+										<div class="serviceFinally__form_content__price">
+											{% if promo_code %}
+												<div style="display: flex; flex-direction: column; align-items: flex-end;">
+													<span style="text-decoration: line-through; color: #999;">{{ original_price }} ₽</span>
+													<span style="color: #4CAF50; font-weight: bold;">{{ final_price|floatformat:2 }} ₽</span>
+												</div>
+											{% else %}
+												{{ service.price }} ₽
+											{% endif %}
+										</div>
+									{% else %}
+										<div class="serviceFinally__form_content__title">Дневной макияж</div>
+										<div class="serviceFinally__form_content__price">750 ₽</div>
+									{% endif %}
+								</div>
+								<div class="serviceFinally__form_content__block fic">
+									<div class="serviceFinally__form_content__items fic">
+										  {% if master and master.photo %}
+											<img src="{{ master.photo.url }}" alt="avatar" class="accordion__block_img">
+										{% else %}
+											<img src="{% static 'img/masters/avatar/vizajist1.svg' %}" alt="avatar" class="accordion__block_img">
+										  {% endif %}
+										  <div class="accordion__block_master">
+											{% if master %}{{ master.name }}{% else %}Елена Грибнова{% endif %}
+										</div>
+								    </div>
+								    <div class="serviceFinally__form_content__item fic">
+										<div class="serviceFinally__form_content__time">{{ appointment_data.time|default:"16:30" }}</div>
+										<div class="serviceFinally__form_content__date">{{ formatted_date|default:"18 ноября" }}</div>
 									</div>
 								</div>
-								
-								<input type="text" name="promocode" id="promoCode" class="contacts__form_iunput" placeholder="Промкод">
+
+							</div>
+						</div>
+						<form method="POST" style="margin-bottom: 10px;">
+							{% csrf_token %}
+							<div class="contacts__form_block fic" style="gap: 10px;">
+								<input type="text" name="promocode" id="promoCodeInput" class="contacts__form_iunput" placeholder="Промокод" value="{{ request.session.applied_promo_code|default:'' }}">
+								<button type="submit" name="apply_promo" class="serviceFinallys__form_btn" style="width: auto; padding: 0 20px;">Применить</button>
+							</div>
+						</form>
+						{% if promo_message %}
+							<div style="color: green; margin-bottom: 10px;">{{ promo_message }}</div>
+						{% endif %}
+						{% if promo_error %}
+							<div style="color: red; margin-bottom: 10px;">{{ promo_error }}</div>
+						{% endif %}
+						<form action="#" class="serviceFinally__form" id="appointmentForm">
+							<div class="serviceFinally__form_itesm">
+								<div class="contacts__form_block fic">
+									<input type="text" name="name" id="clientName" class="contacts__form_iunput" placeholder="Введите имя">
+									<div class="contacts__form_inputBlock">
+										<input type="tel" name="phone" id="clientPhone" class="contacts__form_iunput" placeholder="+79991234567">
+									</div>
+								</div>
 								<div class="contacts__form_checkboxBlock fic">
-									<input type="checkbox" id="termsAgreed" class="contacts__form_checkbox" checked required>
+									<input type="checkbox" id="termsAgreed" class="contacts__form_checkbox" checked>
 									<span class="contacts__form_checkboxBlock__intro">Я согласен(а) с политикой конфиденциальности</span>
 								</div>
 								<button type="submit" class="serviceFinallys__form_btn">Записаться</button>
@@ -108,7 +128,7 @@
 	<script>
 	$(document).ready(function() {
 		console.log('=== Страница подтверждения загружена ===');
-		
+
 		var appointmentData = {
 			salon_id: $('#appointmentData').data('salon-id'),
 			service_id: $('#appointmentData').data('service-id'),
@@ -116,40 +136,45 @@
 			date: $('#appointmentData').data('date'),
 			time: $('#appointmentData').data('time')
 		};
-		
+
 		console.log('Данные записи из сессии:', appointmentData);
-		
+
 		// Обработка формы записи
 		$('#appointmentForm').on('submit', function(e) {
 			e.preventDefault();
-			
+
+			var $button = $(this).find('button[type="submit"]');
+			var $message = $('#formMessage');
+
 			var formData = {
 				name: $('#clientName').val(),
 				phone: $('#clientPhone').val(),
-				promocode: $('#promoCode').val(),
+				promocode: '{{ request.session.applied_promo_code|default:"" }}',
 				terms_agreed: $('#termsAgreed').is(':checked')
 			};
-			
+
 			// Добавляем данные о записи
 			formData.salon_id = appointmentData.salon_id;
 			formData.service_id = appointmentData.service_id;
 			formData.master_id = appointmentData.master_id;
 			formData.date = appointmentData.date;
 			formData.time = appointmentData.time;
-			
+
 			// Валидация
-			if (!formData.name || !formData.phone) {
-				alert('Пожалуйста, заполните имя и телефон');
+			if (!formData.name) {
+				$message.html('<div style="color: red; font-weight: bold;">Пожалуйста, введите имя</div>').show();
 				return;
 			}
-			
+
+			if (!formData.phone) {
+				$message.html('<div style="color: red; font-weight: bold;">Пожалуйста, введите телефон</div>').show();
+				return;
+			}
+
 			if (!formData.terms_agreed) {
-				alert('Необходимо согласие с политикой конфиденциальности');
+				$message.html('<div style="color: red; font-weight: bold;">Необходимо согласие с политикой конфиденциальности</div>').show();
 				return;
 			}
-			
-			var $button = $(this).find('button[type="submit"]');
-			var $message = $('#formMessage');
 			
 			$button.prop('disabled', true).text('Отправка...');
 			$message.hide();
@@ -185,22 +210,6 @@
 			});
 		});
 		
-		// Маска для телефона
-		$('#clientPhone').on('input', function() {
-			var value = $(this).val().replace(/\D/g, '');
-			if (value.length > 0) {
-				if (value.length <= 3) {
-					value = '+7 (' + value;
-				} else if (value.length <= 6) {
-					value = '+7 (' + value.substring(1, 4) + ') ' + value.substring(4);
-				} else if (value.length <= 8) {
-					value = '+7 (' + value.substring(1, 4) + ') ' + value.substring(4, 7) + '-' + value.substring(7);
-				} else {
-					value = '+7 (' + value.substring(1, 4) + ') ' + value.substring(4, 7) + '-' + value.substring(7, 9) + '-' + value.substring(9, 11);
-				}
-			}
-			$(this).val(value);
-		});
 	});
 	</script>
 	{% endblock scripts %}
