@@ -111,7 +111,7 @@ def api_masters(request):
                 "name": master.name,
                 "specialty": master.specialty,
                 "experience": master.experience,
-                "rating": float(master.rating),
+                "rating": float(master.rating) if master.rating else 0.0,
                 "photo_url": master.photo.url if master.photo else None,
                 "salons": salons_data,
                 "services": services_data,
@@ -318,6 +318,7 @@ def api_save_appointment(request):
                 "time": data.get("time"),
             }
 
+            # Сохраняем в сессии
             request.session["appointment_data"] = appointment_data
             request.session.modified = True
 

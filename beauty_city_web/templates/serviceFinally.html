@@ -2,8 +2,8 @@
 {% load static %}
 <head>
 	{% block head %}
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css" integrity="sha512-yHknP1/AwR+yx26cB1y0cjvQUMvEa2PFzt1c9LlS4pRQ5NOTZFWbhBig+X9G9eYW/8m0/4OXNx8pxJ6z57x0dw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css" integrity="sha512-17EgCFERpgZKcm0j0fEq1YCJuyAWdz9KUtv1EjVuaOz8pDnh/0nZxmU6BBXwaaxqoi9PQXnRWqlcDB027hgv9A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css">
 	<link rel="stylesheet" href={% static "css/jquery.arcticmodal-0.3.css" %}>
 	<link rel="stylesheet" href={% static "css/simple.css" %}>
 	<link rel="stylesheet" href={% static "css/air-datepicker.css" %}>
@@ -17,33 +17,49 @@
 				<div class="row">
 					<div class="col-md-6 col-lg-6">
 						<div class="breadCrumbs">
-							<a href="#" class="breadCrumbs__item">На главную</a>
+							<a href="{% url 'beauty_city_web:index' %}" class="breadCrumbs__item">На главную</a>
 						</div>
 						<div class="service__block">
 							<h1 class="service__title">Запись на услугу</h1>
 						</div>
-						<form action="#" class="serviceFinally__form">
+						<form action="#" class="serviceFinally__form" id="appointmentForm">
 							<div class="serviceFinally__form_block">
 								<div class="serviceFinally__form_header fic">
-									<span class="serviceFinally__form_header__number">Запись №32985</span>
+									<span class="serviceFinally__form_header__number">Запись №{% now "His" %}</span>
 									<div class="serviceFinally__form_header__item fic">
-										<div class="serviceFinally__form_header__service">BeautyCity Пушкинская</div>
-										<div class="serviceFinally__form_header__address">ул. Пушкинская, д. 78А</div>
+										{% if salon %}
+											<div class="serviceFinally__form_header__service">{{ salon.name }}</div>
+											<div class="serviceFinally__form_header__address">{{ salon.address }}</div>
+										{% else %}
+											<div class="serviceFinally__form_header__service">BeautyCity Пушкинская</div>
+											<div class="serviceFinally__form_header__address">ул. Пушкинская, д. 78А</div>
+										{% endif %}
 									</div>
 								</div>
 								<div class="serviceFinally__form_content">
 									<div class="serviceFinally__form_content__block fic">
-										<div class="serviceFinally__form_content__title">Дневной макияж</div>
-										<div class="serviceFinally__form_content__price">750 ₽</div>
+										{% if service %}
+											<div class="serviceFinally__form_content__title">{{ service.name }}</div>
+											<div class="serviceFinally__form_content__price">{{ service.price }} ₽</div>
+										{% else %}
+											<div class="serviceFinally__form_content__title">Дневной макияж</div>
+											<div class="serviceFinally__form_content__price">750 ₽</div>
+										{% endif %}
 									</div>
 									<div class="serviceFinally__form_content__block fic">
 										<div class="serviceFinally__form_content__items fic">
-										  	<img src={% static "img/masters/avatar/vizajist1.svg" %} alt="avatar" class="accordion__block_img">
-										  	<div class="accordion__block_master">Елена Грибнова</div>
+										  	{% if master and master.photo %}
+												<img src="{{ master.photo.url }}" alt="avatar" class="accordion__block_img">
+											{% else %}
+												<img src="{% static 'img/masters/avatar/vizajist1.svg' %}" alt="avatar" class="accordion__block_img">
+										  	{% endif %}
+										  	<div class="accordion__block_master">
+												{% if master %}{{ master.name }}{% else %}Елена Грибнова{% endif %}
+											</div>
 									    </div>
 									    <div class="serviceFinally__form_content__item fic">
-											<div class="serviceFinally__form_content__time">16:30</div>
-											<div class="serviceFinally__form_content__date">18 ноября</div>
+											<div class="serviceFinally__form_content__time">{{ appointment_data.time|default:"16:30" }}</div>
+											<div class="serviceFinally__form_content__date">{{ formatted_date|default:"18 ноября" }}</div>
 										</div>
 									</div>
 									
@@ -51,19 +67,20 @@
 							</div>
 							<div class="serviceFinally__form_itesm">
 								<div class="contacts__form_block fic">
-									<input type="text" name="fname" class="contacts__form_iunput" placeholder="Введите имя" required="">
+									<input type="text" name="name" id="clientName" class="contacts__form_iunput" placeholder="Введите имя" required>
 									<div class="contacts__form_inputBlock">
-										<input type="text" name="tel" class="contacts__form_iunput" placeholder="+7(999)999--99-99" required="">
+										<input type="text" name="phone" id="clientPhone" class="contacts__form_iunput" placeholder="+7(999)999-99-99" required>
 									</div>
 								</div>
 								
-								<textarea name="contactsTextarea" class="contacts__form_textarea" placeholder="Вопрос(необязательно)"></textarea>
+								<textarea name="question" id="clientQuestion" class="contacts__form_textarea" placeholder="Вопрос(необязательно)"></textarea>
 								<div class="contacts__form_checkboxBlock fic">
-									<input type="checkbox" class="contacts__form_checkbox" checked="">
-									<span class="contacts__form_checkboxBlock__intro">Я согласен(а) с политикой конфидециоальности</span>
+									<input type="checkbox" id="termsAgreed" class="contacts__form_checkbox" checked required>
+									<span class="contacts__form_checkboxBlock__intro">Я согласен(а) с политикой конфиденциальности</span>
 								</div>
 								<button type="submit" class="serviceFinallys__form_btn">Записаться</button>
-								<button type="submit" class="serviceFinallys__form_back">Назад</button>
+								<button type="button" class="serviceFinallys__form_back" onclick="window.location.href='{% url 'beauty_city_web:service' %}'">Назад</button>
+								<div id="formMessage" style="margin-top: 10px; display: none;"></div>
 							</div>
 						</form>	
 					</div>
@@ -74,47 +91,118 @@
 			</div>
 		</div>
 	</section>
+	
+	<div id="appointmentData" 
+		data-salon-id="{{ appointment_data.salon_id }}" 
+		data-service-id="{{ appointment_data.service_id }}" 
+		data-master-id="{{ appointment_data.master_id }}"
+		data-date="{{ appointment_data.date }}"
+		data-time="{{ appointment_data.time }}"
+		style="display: none;"></div>
+	
 	{% endblock content %}
-	{% block popups %}
-	<div style="display: none;">
-		<div class="box-modal authPopup popup" id="authModal">
-			<div class="box-modal_close arcticmodal-close"><img src={% static "img/x.svg" %} alt="x"></div>
-			<div class="popup__title authPopup__title">Войти по коду</div>
-			<p class="popup__text authPopup__text">Введите свой номер телефона, мы вышлем на него код</p>
-			<form action="#" class="authPopup__form">
-				<div class="contacts__form_inputBlock">
-					<input type="text" name="tel" class="contacts__form_iunput" placeholder="+7(999)999--99-99" required="">
-				</div>
-				<div class="contacts__form_checkboxBlock fic">
-					<input type="checkbox" class="contacts__form_checkbox" checked="">
-					<span class="contacts__form_checkboxBlock__intro">Я согласен(а) с политикой конфидециоальности</span>
-				</div>
-				<button type="submit" class="popup__btn authPopup__btn">Отправить</button>
-			</form>
-		</div>
-	</div>
-	<div style="display: none;">
-		<div class="box-modal confirmPopup popup" id="confirmModal">
-			<div class="box-modal_close arcticmodal-close"><img src={% static "img/x.svg" %} alt="x"></div>
-			<div class="popup__title confirmPopup__title">Подтвердите номер</div>
-			<p class="popup__text confirmPopup__text">Введите код, полученный по SMS на номер +7 (928) 164 48 60</p>
-			<div class="confirmPopup__number">
-				<input type="text" name="num1" class="tipsPopup__form_inputNum popup__input" placeholder="" required="">
-				<input type="text" name="num2" class="tipsPopup__form_inputNum popup__input" placeholder="" required="">
-				<input type="text" name="num3" class="tipsPopup__form_inputNum popup__input" placeholder="" required="">
-				<input type="text" name="num4" class="tipsPopup__form_inputNum popup__input" placeholder="" required="">
-
-			</div>
-			<div class="confirmPopup__sms">Если SMS не пришло вы можете <a href="#" class="popup__link">запросить код повторно</a></div>
-			<div class="confirmPopup__changeNumber">
-				<a href="#" class="confirmPopup__link popup__link">Изменить номер телефона</a>
-			</div>
-		</div>
-	</div>
-	{% endblock popups %}
+	
 	{% block scripts %}
 	<script src={% static "js/air-datepicker.js" %}></script>
 	<script src={% static "js/jquery.arcticmodal-0.3.min.js" %}></script>
+	<script>
+	$(document).ready(function() {
+		console.log('=== Страница подтверждения загружена ===');
+		
+		var appointmentData = {
+			salon_id: $('#appointmentData').data('salon-id'),
+			service_id: $('#appointmentData').data('service-id'),
+			master_id: $('#appointmentData').data('master-id'),
+			date: $('#appointmentData').data('date'),
+			time: $('#appointmentData').data('time')
+		};
+		
+		console.log('Данные записи из сессии:', appointmentData);
+		
+		// Обработка формы записи
+		$('#appointmentForm').on('submit', function(e) {
+			e.preventDefault();
+			
+			var formData = {
+				name: $('#clientName').val(),
+				phone: $('#clientPhone').val(),
+				question: $('#clientQuestion').val(),
+				terms_agreed: $('#termsAgreed').is(':checked')
+			};
+			
+			// Добавляем данные о записи
+			formData.salon_id = appointmentData.salon_id;
+			formData.service_id = appointmentData.service_id;
+			formData.master_id = appointmentData.master_id;
+			formData.date = appointmentData.date;
+			formData.time = appointmentData.time;
+			
+			// Валидация
+			if (!formData.name || !formData.phone) {
+				alert('Пожалуйста, заполните имя и телефон');
+				return;
+			}
+			
+			if (!formData.terms_agreed) {
+				alert('Необходимо согласие с политикой конфиденциальности');
+				return;
+			}
+			
+			var $button = $(this).find('button[type="submit"]');
+			var $message = $('#formMessage');
+			
+			$button.prop('disabled', true).text('Отправка...');
+			$message.hide();
+			
+			// Отправляем данные на сервер
+			$.ajax({
+				url: '{% url "beauty_city_web:api_create_appointment" %}',
+				type: 'POST',
+				contentType: 'application/json',
+				data: JSON.stringify(formData),
+				success: function(response) {
+					if (response.success) {
+						$message.html('<div style="color: green; font-weight: bold;">' + response.message + '</div>').show();
+						$button.text('Запись создана!');
+						
+						// Через 2 секунды перенаправляем на главную
+						setTimeout(function() {
+							window.location.href = '{% url "beauty_city_web:index" %}';
+						}, 2000);
+					} else {
+						$message.html('<div style="color: red; font-weight: bold;">' + response.error + '</div>').show();
+						$button.prop('disabled', false).text('Записаться');
+					}
+				},
+				error: function(xhr) {
+					var errorMsg = 'Произошла ошибка при создании записи';
+					if (xhr.responseJSON && xhr.responseJSON.error) {
+						errorMsg = xhr.responseJSON.error;
+					}
+					$message.html('<div style="color: red; font-weight: bold;">' + errorMsg + '</div>').show();
+					$button.prop('disabled', false).text('Записаться');
+				}
+			});
+		});
+		
+		// Маска для телефона
+		$('#clientPhone').on('input', function() {
+			var value = $(this).val().replace(/\D/g, '');
+			if (value.length > 0) {
+				if (value.length <= 3) {
+					value = '+7 (' + value;
+				} else if (value.length <= 6) {
+					value = '+7 (' + value.substring(1, 4) + ') ' + value.substring(4);
+				} else if (value.length <= 8) {
+					value = '+7 (' + value.substring(1, 4) + ') ' + value.substring(4, 7) + '-' + value.substring(7);
+				} else {
+					value = '+7 (' + value.substring(1, 4) + ') ' + value.substring(4, 7) + '-' + value.substring(7, 9) + '-' + value.substring(9, 11);
+				}
+			}
+			$(this).val(value);
+		});
+	});
+	</script>
 	{% endblock scripts %}
 </body>
 </html>

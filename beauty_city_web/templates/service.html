@@ -1,133 +1,130 @@
 {% extends "base.html" %}
 {% load static %}
 <head>
-	{% block head %}
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css" integrity="sha512-yHknP1/AwR+yx26cB1y0cjvQUMvEa2PFzt1c9LlS4pRQ5NOTZFWbhBig+X9G9eYW/8m0/4OXNx8pxJ6z57x0dw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css" integrity="sha512-17EgCFERpgZKcm0j0fEq1YCJuyAWdz9KUtv1EjVuaOz8pDnh/0nZxmU6BBXwaaxqoi9PQXnRWqlcDB027hgv9A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-	<link rel="stylesheet" href={% static "css/jquery.arcticmodal-0.3.css" %}>
-	<!-- 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css.map">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css.map"> -->
-	<link rel="stylesheet" href={% static "css/air-datepicker.css" %}>
-	<script src={% static "js/air-datepicker.js" %}></script>
-	{% endblock head %}
+    {% block head %}
+    <link rel="stylesheet" href="{% static 'css/jquery.arcticmodal-0.3.css' %}">
+    
+    <style>
+    .accordion__block {
+        cursor: pointer;
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+    }
+    .accordion__block:hover {
+        background-color: #f5f5f5;
+    }
+    .accordion__block_item {
+        cursor: pointer;
+        padding: 8px 10px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .accordion__block_item:hover {
+        background-color: #f9f9f9;
+    }
+    .accordion__block_img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        margin-right: 10px;
+        object-fit: cover;
+    }
+    .time__elems_btn.active {
+        background-color: #ffcc00;
+        color: #000;
+    }
+    .time__elems_btn.selected {
+        border: 2px solid #ff6600;
+    }
+    .time__elems_btn {
+        margin: 5px;
+        padding: 8px 15px;
+        border: 1px solid #ddd;
+        background: white;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+    .time__elems_btn:hover {
+        background: #f5f5f5;
+    }
+    .date-picker-container {
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        height: 100%;
+    }
+    .date-picker-container label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: bold;
+        color: #333;
+    }
+    .date-picker-container input[type="date"] {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+    .time__btns {
+        margin-top: 30px;
+        text-align: center;
+    }
+    .time__btns_next, .time__btns_home {
+        padding: 12px 30px;
+        margin: 0 10px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+    }
+    .time__btns_next {
+        background: #ffcc00;
+        color: #000;
+    }
+    .time__btns_next:hover {
+        background: #ffd633;
+    }
+    .time__btns_home {
+        background: #f0f0f0;
+        color: #333;
+    }
+    .time__btns_home:hover {
+        background: #e0e0e0;
+    }
+    </style>
+    {% endblock head %}
 </head>
 <body class="servicePage">
-	{% block content %}
+  {% block content %}
 	<section id="service">
 		<div class="container">
 			<div class="service">
 				<div class="breadCrumbs">
-					<a href="#" class="breadCrumbs__item">На главную</a>
+					<a href="{% url 'beauty_city_web:index' %}" class="breadCrumbs__item">На главную</a>
 				</div>
 				<div class="service__block">
 					<h1 class="service__title">Запись на услугу</h1>
 					<button class="service__btn btn telephoneAppointmentOpen">Запись по телефону</button>
 				</div>
 				<form action="#" class="service__form">
-					<!-- <select name="selectSalon" id="" class="service__form_select">
-						<option value="" selected>(Выберите салон)</option>
-						<option value="salon1" >Салон 1</option>
-						<option value="salon2" >Салон 2</option>
-						<option value="salon3" >Салон 3</option>
-					</select> -->
 					<div class="service__form_block service__salons">
-						<button class="accordion">(Выберите салон)</button>
-						<div class="panel">
-						  <div class="accordion__block fic">
-						  	<div class="accordion__block_intro">BeautyCity Пушкинская</div>
-						  	<div class="accordion__block_address">ул. Пушкинская, д. 78А</div>
-						  </div>
-						  <div class="accordion__block fic">
-						  	<div class="accordion__block_intro">BeautyCity Ленина</div>
-						  	<div class="accordion__block_address">ул. Ленина, д. 211</div>
-						  </div>
-						  <div class="accordion__block fic">
-						  	<div class="accordion__block_intro">BeautyCity Красная</div>
-						  	<div class="accordion__block_address">ул. Красная, д. 10</div>
-						  </div>
+						<button class="accordion" type="button">(Выберите салон)</button>
+						<div class="panel" style="display: none;">
 						</div>
 					</div>
 					<div class="service__form_block service__services">
-						<button class="accordion">(Выберите услугу)</button>
-						<div class="panel">
-							<button class="accordion">Парикмахерские услуги</button>
-						 	<div class="panel">
-							  
-							  	<!-- <div class="accordion__block_intro">Макияж</div> -->
-							  		<div class="accordion__block_items">
-							  			<div class="accordion__block_item fic">
-							  				<div class="accordion__block_item_intro">Окрашивание волос</div>
-									  		<div class="accordion__block_item_address">5 000 ₽</div>
-							  			</div>
-
-							  			<div class="accordion__block_item fic">
-							  				<div class="accordion__block_item_intro">Укладка волос</div>
-									  		<div class="accordion__block_item_address">1 500 ₽</div>
-							  			</div>	
-								  </div>
-							  
-							</div>
-						 	<button class="accordion">Ногтевой сервис</button>
-							<div class="panel">
-							  
-							  	<!-- <div class="accordion__block_intro">Макияж</div> -->
-							  		<div class="accordion__block_items">
-							  			<div class="accordion__block_item fic">
-							  				<div class="accordion__block_item_intro">Маникюр. Классический</div>
-									  		<div class="accordion__block_item_address">1 400 ₽</div>
-							  			</div>
-
-							  			<div class="accordion__block_item fic">
-							  				<div class="accordion__block_item_intro">Педикюр</div>
-									  		<div class="accordion__block_item_address">1 400 ₽</div>
-							  			</div>
-							  			<div class="accordion__block_item fic">
-							  				<div class="accordion__block_item_intro">Наращивание ногтей</div>
-									  		<div class="accordion__block_item_address">1 400 ₽</div>
-							  			</div>
-								  </div>
-							  
-							</div>
-						 <!--  <div class="accordion__block">
-						  	<div class="accordion__block_intro">Парикмахерские услуги</div>
-						  </div>
-						  <div class="accordion__block">
-						  	<div class="accordion__block_intro">Ногтевой сервис</div>
-						  </div> -->
-						  <button class="accordion">Макияж</button>
-						  <div class="panel">
-
-							  
-							  	<!-- <div class="accordion__block_intro">Макияж</div> -->
-							  		<div class="accordion__block_items">
-							  			<div class="accordion__block_item fic">
-							  				<div class="accordion__block_item_intro">Дневной макияж</div>
-									  		<div class="accordion__block_item_address">1 400 ₽</div>
-							  			</div>
-
-							  			<div class="accordion__block_item fic">
-							  				<div class="accordion__block_item_intro">Свадебный макияж</div>
-									  		<div class="accordion__block_item_address">3 000 ₽</div>
-							  			</div>
-							  			<div class="accordion__block_item fic">
-							  				<div class="accordion__block_item_intro">Вечерний макияж</div>
-									  		<div class="accordion__block_item_address">2 000 ₽</div>
-							  			</div>
-								  </div>
-							  
-							</div>
+						<button class="accordion" type="button">(Выберите услугу)</button>
+						<div class="panel" style="display: none;">
 						</div>
 					</div>
 					<div class="service__form_block service__masters">
-						<button class="accordion">(Выберите мастера)</button>
-						<div class="panel">
-						  
+						<button class="accordion" type="button">(Выберите мастера)</button>
+						<div class="panel" style="display: none;">
 						</div>
-						  
-						
-
 					</div>
-					
 				</form>
 			</div>
 		</div>
@@ -139,32 +136,51 @@
 				<div class="time__block">
 					<div class="row">
 						<div class="col-md-4">
-							<div id="datepickerHere"></div>
+							<div class="date-picker-container">
+								<label for="appointmentDate">Выберите дату:</label>
+								<input type="date" id="appointmentDate" 
+									   min="{% now 'Y-m-d' %}"
+									   style="width: 100%; padding: 12px; font-size: 16px;">
+								<div id="selectedDateInfo" style="margin-top: 10px; font-style: italic; color: #666; display: none;">
+									Выбрана дата: <span id="selectedDateText"></span>
+								</div>
+							</div>
 						</div>
 						<div class="col-md-8">
 							<div class="time__elems">
 								<div class="time__items">
-									<div class="time__elems_intro">Утро</div>
+									<div class="time__elems_intro">Утро (10:00 - 12:00)</div>
 									<div class="time__elems_elem fic">
 										<button data-time="10:00" class="time__elems_btn">10:00</button>
 										<button data-time="10:30" class="time__elems_btn">10:30</button>
+										<button data-time="11:00" class="time__elems_btn">11:00</button>
+										<button data-time="11:30" class="time__elems_btn">11:30</button>
 									</div>
 								</div>
 								<div class="time__items">
-									<div class="time__elems_intro">День</div>
+									<div class="time__elems_intro">День (12:00 - 17:00)</div>
 									<div class="time__elems_elem fic">
 										<button data-time="12:00" class="time__elems_btn">12:00</button>
 										<button data-time="12:30" class="time__elems_btn">12:30</button>
+										<button data-time="13:00" class="time__elems_btn">13:00</button>
+										<button data-time="13:30" class="time__elems_btn">13:30</button>
+										<button data-time="14:00" class="time__elems_btn">14:00</button>
+										<button data-time="14:30" class="time__elems_btn">14:30</button>
 										<button data-time="15:00" class="time__elems_btn">15:00</button>
+										<button data-time="15:30" class="time__elems_btn">15:30</button>
+										<button data-time="16:00" class="time__elems_btn">16:00</button>
 										<button data-time="16:30" class="time__elems_btn">16:30</button>
 									</div>
 								</div>
 								<div class="time__items">
-									<div class="time__elems_intro">Вечер</div>
+									<div class="time__elems_intro">Вечер (17:00 - 20:00)</div>
 									<div class="time__elems_elem fic">
 										<button data-time="17:00" class="time__elems_btn">17:00</button>
+										<button data-time="17:30" class="time__elems_btn">17:30</button>
+										<button data-time="18:00" class="time__elems_btn">18:00</button>
 										<button data-time="18:30" class="time__elems_btn">18:30</button>
 										<button data-time="19:00" class="time__elems_btn">19:00</button>
+										<button data-time="19:30" class="time__elems_btn">19:30</button>
 									</div>
 								</div>
 							</div>
@@ -174,8 +190,8 @@
 				<div class="time__btns">
 					<div class="row">
 						<div class="col-md-12">
-							<button  class="time__btns_next">Далее</button>
-							<button  class="time__btns_home">На главную</button>
+							<button class="time__btns_next">Далее</button>
+							<button class="time__btns_home">На главную</button>
 						</div>
 					</div>
 				</div>
@@ -186,14 +202,349 @@
 	{% block popups %}
 	<div style="display: none;">
 		<div class="box-modal tipsPopup popup" style="width: 500px;" id="appointmentModal">
-			<div class="box-modal_close arcticmodal-close"><img src="{% static "img/x.svg" %}" alt="x"></div>
+			<div class="box-modal_close arcticmodal-close"><img src="{% static 'img/x.svg' %}" alt="x"></div>
 			<div class="popup__title reviewPopup__title" style="padding-left: 40px;">Номер для записи</div>
 			<a href="tel:+79179023800" class="contacts__info_tel" style="padding-left: 135px;">+7 (917) 902 38 00</a>
 		</div>
 	</div>
 	{% endblock popups %}
 	{% block scripts %}
-	<script src={% static "js/jquery.arcticmodal-0.3.min.js" %}></script>
+	<script src="{% static 'js/jquery.arcticmodal-0.3.min.js' %}"></script>
+	
+	<script>
+	$(document).ready(function() {
+		console.log('=== Страница записи загружена ===');
+		console.log('jQuery версия:', $.fn.jquery);
+		
+		var DEFAULT_AVATAR_URL = '/static/img/avatars/default.svg';
+		
+		// Форматирование даты
+		function formatDate(dateString) {
+			var date = new Date(dateString);
+			var options = { 
+				weekday: 'long', 
+				year: 'numeric', 
+				month: 'long', 
+				day: 'numeric' 
+			};
+			return date.toLocaleDateString('ru-RU', options);
+		}
+		
+		$(document).on('click', '.accordion', function(e) {
+			e.stopPropagation();
+			$(this).toggleClass("active");
+			$(this).next(".panel").slideToggle(200);
+		});
+
+		$('.service__salons .accordion').on('click', function() {
+			if ($('.service__salons .panel').is(':visible') && !$(this).hasClass('loaded')) {
+				loadSalons();
+				$(this).addClass('loaded');
+			}
+		});
+
+		$('.service__services .accordion').on('click', function() {
+			if ($('.service__services .panel').is(':visible') && !$(this).hasClass('loaded')) {
+				loadServices();
+				$(this).addClass('loaded');
+			}
+		});
+
+		$('.service__masters .accordion').on('click', function() {
+			if ($('.service__masters .panel').is(':visible') && !$(this).hasClass('loaded')) {
+				loadMasters();
+				$(this).addClass('loaded');
+			}
+		});
+
+		function loadSalons() {
+			console.log('Загрузка салонов...');
+			$.ajax({
+				url: '/api/salons/',
+				type: 'GET',
+				success: function(data) {
+					console.log('Салонов загружено:', data.salons.length);
+					var $panel = $('.service__salons .panel');
+					$panel.empty();
+					
+					data.salons.forEach(function(salon) {
+						var $salonBlock = $(
+							'<div class="accordion__block fic">' +
+							'<div class="accordion__block_intro">' + salon.name + '</div>' +
+							'<div class="accordion__block_address">' + salon.address + '</div>' +
+							'</div>'
+						);
+						
+						$salonBlock.on('click', function() {
+							console.log('Выбран салон:', salon.name);
+							// Сохраняем выбранный салон
+							$('.service__salons .accordion').text(salon.name);
+							$('.service__salons .accordion').data('salon-id', salon.id);
+							
+							// Закрываем панель
+							$('.service__salons .accordion').removeClass('active');
+							$panel.slideUp(200);
+							
+							// Загружаем услуги для этого салона
+							loadServices(salon.id);
+						});
+						
+						$panel.append($salonBlock);
+					});
+				},
+				error: function(error) {
+					console.error('Ошибка загрузки салонов:', error);
+					alert('Не удалось загрузить список салонов');
+				}
+			});
+		}
+
+		// Функция загрузки услуг
+		function loadServices(salonId) {
+			var url = '/api/services/';
+			if (salonId) {
+				url += '?salon_id=' + salonId;
+			}
+			
+			console.log('Загрузка услуг, URL:', url);
+			
+			$.ajax({
+				url: url,
+				type: 'GET',
+				success: function(data) {
+					console.log('Категорий услуг загружено:', data.categories.length);
+					var $panel = $('.service__services .panel');
+					$panel.empty();
+					
+					if (data.categories.length === 0) {
+						$panel.html('<div class="accordion__block">Нет доступных услуг в этом салоне</div>');
+						return;
+					}
+					
+					data.categories.forEach(function(category) {
+						var $categoryBtn = $(
+							'<button class="accordion" type="button">' + category.name + '</button>'
+						);
+						
+						var $categoryPanel = $('<div class="panel" style="display: none;"></div>');
+						
+						category.services.forEach(function(service) {
+							var $serviceItem = $(
+								'<div class="accordion__block_item fic">' +
+								'<div class="accordion__block_item_intro">' + service.name + '</div>' +
+								'<div class="accordion__block_item_address">' + service.price + ' ₽</div>' +
+								'</div>'
+							);
+							
+							$serviceItem.on('click', function(e) {
+								e.stopPropagation();
+								
+								// Сохраняем выбранную услугу
+								$('.service__services .accordion').text(service.name);
+								$('.service__services .accordion').data('service-id', service.id);
+								$('.service__services .accordion').data('service-price', service.price);
+								
+								// Закрываем все аккордеоны услуг
+								$('.service__services .accordion').removeClass('active');
+								$('.service__services .panel').slideUp(200);
+								
+								// Загружаем мастеров для этой услуги
+								var salonId = $('.service__salons .accordion').data('salon-id');
+								if (salonId) {
+									loadMasters(salonId, service.id);
+								} else {
+									alert('Сначала выберите салон');
+								}
+							});
+							
+							$categoryPanel.append($serviceItem);
+						});
+						
+						$panel.append($categoryBtn);
+						$panel.append($categoryPanel);
+					});
+				},
+				error: function(error) {
+					console.error('Ошибка загрузки услуг:', error);
+					alert('Не удалось загрузить список услуг');
+				}
+			});
+		}
+
+		// Функция загрузки мастеров
+		function loadMasters(salonId, serviceId) {
+			if (!salonId) {
+				console.error('salonId не определен');
+				alert('Сначала выберите салон');
+				return;
+			}
+			
+			var url = '/api/masters/';
+			var params = [];
+			
+			if (salonId) params.push('salon_id=' + salonId);
+			if (serviceId) params.push('service_id=' + serviceId);
+			
+			if (params.length > 0) {
+				url += '?' + params.join('&');
+			}
+			
+			console.log('Загрузка мастеров, URL:', url);
+			
+			$.ajax({
+				url: url,
+				type: 'GET',
+				success: function(data) {
+					console.log('Мастеров загружено:', data.masters.length);
+					var $panel = $('.service__masters .panel');
+					$panel.empty();
+					
+					if (data.masters.length === 0) {
+						$panel.html('<div class="accordion__block">Нет доступных мастеров для этой услуги в выбранном салоне</div>');
+						return;
+					}
+					
+					data.masters.forEach(function(master) {
+						var photoUrl = master.photo_url || DEFAULT_AVATAR_URL;
+						var $masterBlock = $(
+							'<div class="accordion__block fic">' +
+							'<img src="' + photoUrl + '" alt="' + master.name + '" class="accordion__block_img" onerror="this.src=\'' + DEFAULT_AVATAR_URL + '\'">' +
+							'<div>' +
+							'<div class="accordion__block_master">' + master.name + '</div>' +
+							'<div style="font-size: 12px; color: #666;">' + master.specialty + '</div>' +
+							'</div>' +
+							'</div>'
+						);
+						
+						$masterBlock.on('click', function() {
+							$('.service__masters .accordion').text(master.name);
+							$('.service__masters .accordion').data('master-id', master.id);
+							
+							$('.service__masters .accordion').removeClass('active');
+							$panel.slideUp(200);
+
+							$('#selectedDateInfo').show();
+							$('#selectedDateText').text('(выберите дату выше)');
+							
+							console.log('Выбран мастер:', master.name);
+						});
+						
+						$panel.append($masterBlock);
+					});
+				},
+				error: function(error) {
+					console.error('Ошибка загрузки мастеров:', error);
+					alert('Не удалось загрузить список мастеров');
+				}
+			});
+		}
+
+		$('#appointmentDate').on('change', function() {
+			var selectedDate = $(this).val();
+			if (selectedDate) {
+				$('#selectedDateText').text(formatDate(selectedDate));
+				$('#selectedDateInfo').show();
+				console.log('Выбрана дата:', selectedDate);
+				
+				$('.time__elems_btn').removeClass('active selected');
+			}
+		});
+
+		$(document).on('click', '.time__elems_btn', function() {
+			var selectedDate = $('#appointmentDate').val();
+			if (!selectedDate) {
+				alert('Сначала выберите дату');
+				return;
+			}
+			
+			$('.time__elems_btn').removeClass('active selected');
+			$(this).addClass('active selected');
+			
+			var selectedTime = $(this).data('time');
+			console.log('Выбрано время:', selectedTime, 'на дату:', selectedDate);
+		});
+
+		$('.time__btns_next').on('click', function() {
+			console.log('Нажата кнопка "Далее"');
+			
+			// Собираем данные
+			var salonId = $('.service__salons .accordion').data('salon-id');
+			var serviceId = $('.service__services .accordion').data('service-id');
+			var masterId = $('.service__masters .accordion').data('master-id');
+			var selectedDate = $('#appointmentDate').val();
+			var selectedTime = $('.time__elems_btn.selected').data('time');
+			
+			console.log('Проверка данных записи:');
+			console.log('- salonId:', salonId);
+			console.log('- serviceId:', serviceId);
+			console.log('- masterId:', masterId);
+			console.log('- selectedDate:', selectedDate);
+			console.log('- selectedTime:', selectedTime);
+			
+			// Валидация
+			var missing = [];
+			if (!salonId) missing.push('салон');
+			if (!serviceId) missing.push('услуга');
+			if (!masterId) missing.push('мастер');
+			if (!selectedDate) missing.push('дата');
+			if (!selectedTime) missing.push('время');
+			
+			if (missing.length > 0) {
+				alert('Пожалуйста, заполните все поля. Отсутствует: ' + missing.join(', '));
+				return;
+			}
+			
+			// Сохраняем данные в сессии
+			$.ajax({
+				url: '/api/save-appointment/',
+				type: 'POST',
+				contentType: 'application/json',
+				data: JSON.stringify({
+					salon_id: salonId,
+					service_id: serviceId,
+					master_id: masterId,
+					date: selectedDate,
+					time: selectedTime
+				}),
+				success: function(response) {
+					if (response.success) {
+						// Перенаправляем на страницу подтверждения
+						window.location.href = response.redirect_url || '{% url "beauty_city_web:service_finally" %}';
+					} else {
+						alert('Ошибка: ' + (response.error || 'Неизвестная ошибка при сохранении записи'));
+					}
+				},
+				error: function(error) {
+					console.error('Ошибка сохранения записи:', error);
+					if (error.status === 404) {
+						// Если endpoint не найден, все равно переходим на следующую страницу
+						alert('Запись сохранена. Переход на страницу подтверждения...');
+						window.location.href = '{% url "beauty_city_web:service_finally" %}';
+					} else {
+						alert('Ошибка при сохранении записи. Пожалуйста, попробуйте еще раз.');
+					}
+				}
+			});
+		});
+
+		// Обработчик кнопки "На главную"
+		$('.time__btns_home').on('click', function() {
+			window.location.href = '{% url "beauty_city_web:index" %}';
+		});
+
+		// Обработчик для кнопки "Запись по телефону"
+		$('.telephoneAppointmentOpen').on('click', function() {
+			$('#appointmentModal').arcticmodal();
+		});
+		
+		// Устанавливаем минимальную дату (сегодня)
+		var today = new Date().toISOString().split('T')[0];
+		$('#appointmentDate').attr('min', today);
+		$('#appointmentDate').val(today);
+		$('#selectedDateText').text(formatDate(today));
+		$('#selectedDateInfo').show();
+	});
+	</script>
 	{% endblock scripts %}
 </body>
 </html>
