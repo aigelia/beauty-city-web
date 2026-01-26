@@ -449,7 +449,7 @@ def api_create_appointment(request):
                     return JsonResponse(
                         {
                             "success": False,
-                            "message": "Запись на это время не доступна для этого мастера.",
+                            "message": "Запись на это время недоступна для этого мастера.",
                         }
                     )
             except Appointment.DoesNotExist:
