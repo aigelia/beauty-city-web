@@ -37,5 +37,5 @@ urlpatterns = [
     path("api/contact-request/", views.api_contact_request, name="api_contact_request"),
     path("api/api-client-statistics/", views.api_client_statistics, name="api_client_statistics"),
 
-    path("admin-page", views.admin_page, name="admin_page"),
+    path("admin-page/", views.admin_page, name="admin_page"),
 ]
