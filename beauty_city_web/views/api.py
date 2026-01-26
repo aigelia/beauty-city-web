@@ -437,19 +437,22 @@ def api_create_appointment(request):
                 if masters.exists():
                     master = masters.first()
 
-            if Appointment.objects.get(
-                master=master,
-                appointment_date=datetime.strptime(
-                    final_data["date"], "%Y-%m-%d"
-                ).date(),
-                appointment_time=datetime.strptime(final_data["time"], "%H:%M").time(),
-            ):
-                return JsonResponse(
-                    {
-                        "success": False,
-                        "message": "Запись на это время не доступна для этого мастера.",
-                    }
-                )
+            try:
+                if Appointment.objects.get(
+                    master=master,
+                    appointment_date=datetime.strptime(
+                        final_data["date"], "%Y-%m-%d"
+                    ).date(),
+                    appointment_time=datetime.strptime(final_data["time"], "%H:%M").time(),
+                ):
+                    return JsonResponse(
+                        {
+                            "success": False,
+                            "message": "Запись на это время не доступна для этого мастера.",
+                        }
+                    )
+            except Appointment.DoesNotExist:
+                ...
 
             appointment = Appointment.objects.create(
                 client=client,
