@@ -3,6 +3,8 @@ from phonenumbers.phonenumberutil import NumberParseException
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
+from django.db.models import Q
+from datetime import datetime, date, time as dt_time
 from django.utils import timezone
 from datetime import datetime, timedelta
 from ..models import Appointment, Salon, Master, Service, Client, PromoCode
@@ -18,34 +20,40 @@ from ..utils.validators import (
 @csrf_exempt
 def api_salons(request):
     """Получить список всех активных салонов"""
-    salons = Salon.objects.filter(is_active=True)
-    data = []
-    for salon in salons:
-        data.append(
-            {
-                "id": salon.id,
-                "name": salon.name,
-                "address": salon.address,
-                "phone": salon.phone,
-                "working_hours": salon.working_hours,
-                "photo_url": salon.photo.url if salon.photo else None,
-            }
-        )
-    return JsonResponse({"salons": data})
+    try:
+        salons = Salon.objects.filter(is_active=True)
+        data = []
+        for salon in salons:
+            data.append(
+                {
+                    "id": salon.id,
+                    "name": salon.name,
+                    "address": salon.address,
+                    "phone": str(salon.phone) if salon.phone else "",
+                    "working_hours": salon.working_hours,
+                    "photo_url": salon.photo.url if salon.photo else None,
+                }
+            )
+        print(f"API Salons: Found {len(data)} salons")
+        return JsonResponse({"salons": data})
+    except Exception as e:
+        print(f"API Salons Error: {str(e)}")
+        return JsonResponse({"error": str(e), "salons": []}, status=500)
 
 
 @csrf_exempt
 def api_services(request):
-    """Получить услуги с фильтрацией по салону"""
+    """Получить услуги с фильтрацией по салону и мастеру"""
     salon_id = request.GET.get("salon_id")
-    category_id = request.GET.get("category_id")
+    master_id = request.GET.get("master_id")
 
     services = Service.objects.filter(is_active=True)
 
-    if salon_id:
+    if salon_id and salon_id != "any":
         services = services.filter(masters__salons__id=salon_id).distinct()
-    if category_id:
-        services = services.filter(category_id=category_id)
+
+    if master_id and master_id != "any":
+        services = services.filter(masters__id=master_id).distinct()
 
     categories = {}
     for service in services:
@@ -71,16 +79,17 @@ def api_services(request):
 
 @csrf_exempt
 def api_masters(request):
-    """Получить мастеров с фильтрацией"""
+    """Получить мастеров с фильтрацией по салону и услуге"""
     salon_id = request.GET.get("salon_id")
     service_id = request.GET.get("service_id")
 
     masters = Master.objects.filter(is_active=True)
 
-    if salon_id:
-        masters = masters.filter(salons__id=salon_id)
-    if service_id:
-        masters = masters.filter(services__id=service_id)
+    if salon_id and salon_id != "any":
+        masters = masters.filter(salons__id=salon_id).distinct()
+
+    if service_id and service_id != "any":
+        masters = masters.filter(services__id=service_id).distinct()
 
     data = []
     for master in masters:
@@ -156,6 +165,72 @@ def api_available_dates(request):
 
 
 @csrf_exempt
+def api_available_dates_simple(request):
+    """Получить доступные даты без привязки к мастеру"""
+    salon_id = request.GET.get("salon_id")
+    service_id = request.GET.get("service_id")
+    master_id = request.GET.get("master_id")
+
+    today = datetime.now().date()
+    dates = []
+
+    if not any([salon_id, service_id, master_id]):
+        for i in range(30):
+            date_obj = today + timedelta(days=i)
+            dates.append(
+                {
+                    "date": date_obj.strftime("%Y-%m-%d"),
+                    "day": date_obj.day,
+                    "month": date_obj.strftime("%B"),
+                    "weekday": date_obj.strftime("%A"),
+                    "is_today": date_obj == today,
+                    "is_tomorrow": date_obj == today + timedelta(days=1),
+                }
+            )
+        return JsonResponse({"dates": dates})
+
+    for i in range(30):
+        date_obj = today + timedelta(days=i)
+        date_str = date_obj.strftime("%Y-%m-%d")
+
+        appointments = Appointment.objects.filter(
+            appointment_date=date_obj, status__in=["pending", "confirmed"]
+        )
+
+        if salon_id and salon_id != "any":
+            appointments = appointments.filter(salon_id=salon_id)
+
+        if service_id and service_id != "any":
+            appointments = appointments.filter(service_id=service_id)
+
+        if master_id and master_id != "any":
+            appointments = appointments.filter(master_id=master_id)
+
+        busy_times = set(appointments.values_list("appointment_time", flat=True))
+
+        all_times = []
+        for hour in range(10, 20):
+            for minute in (0, 30):
+                if hour == 19 and minute == 30:
+                    break
+                all_times.append(f"{hour:02d}:{minute:02d}")
+
+        if len(busy_times) < len(all_times):
+            dates.append(
+                {
+                    "date": date_str,
+                    "day": date_obj.day,
+                    "month": date_obj.strftime("%B"),
+                    "weekday": date_obj.strftime("%A"),
+                    "is_today": date_obj == today,
+                    "is_tomorrow": date_obj == today + timedelta(days=1),
+                }
+            )
+
+    return JsonResponse({"dates": dates})
+
+
+@csrf_exempt
 def api_available_times(request):
     """Получить доступное время на выбранную дату"""
     date_str = request.GET.get("date")
@@ -177,35 +252,53 @@ def api_available_times(request):
 
     times = []
 
-    if master_id and service_id:
-        try:
-            service = Service.objects.get(id=service_id)
-            available_times = service.get_available_times(
-                date, master_id=master_id, salon_id=salon_id
-            )
+    morning_times = []
+    day_times = []
+    evening_times = []
 
-            morning_times = []
-            day_times = []
-            evening_times = []
+    # Рабочие часы: с 10:00 до 19:00, шаг 30 минут
+    for hour in range(10, 20):
+        for minute in (0, 30):
+            if hour == 19 and minute == 30:
+                break
+            time_str = f"{hour:02d}:{minute:02d}"
 
-            for time_str in available_times:
-                hour = int(time_str.split(":")[0])
-                if hour < 12:
-                    morning_times.append(time_str)
-                elif hour < 17:
-                    day_times.append(time_str)
-                else:
-                    evening_times.append(time_str)
+            # Проверяем, свободно ли это время
+            if master_id and master_id != "any":
+                # Проверяем занятость у мастера
+                appointments = Appointment.objects.filter(
+                    master_id=master_id,
+                    appointment_date=date,
+                    appointment_time=time_str,
+                    status__in=["pending", "confirmed"],
+                )
+                if appointments.exists():
+                    continue
 
-            if morning_times:
-                times.append({"period": "Утро", "times": morning_times})
-            if day_times:
-                times.append({"period": "День", "times": day_times})
-            if evening_times:
-                times.append({"period": "Вечер", "times": evening_times})
+            if service_id and service_id != "any" and salon_id and salon_id != "any":
+                appointments = Appointment.objects.filter(
+                    service_id=service_id,
+                    salon_id=salon_id,
+                    appointment_date=date,
+                    appointment_time=time_str,
+                    status__in=["pending", "confirmed"],
+                )
+                if appointments.exists():
+                    continue
 
-        except (Service.DoesNotExist, Master.DoesNotExist):
-            pass
+            if hour < 12:
+                morning_times.append(time_str)
+            elif hour < 17:
+                day_times.append(time_str)
+            else:
+                evening_times.append(time_str)
+
+    if morning_times:
+        times.append({"period": "Утро", "times": morning_times})
+    if day_times:
+        times.append({"period": "День", "times": day_times})
+    if evening_times:
+        times.append({"period": "Вечер", "times": evening_times})
 
     return JsonResponse({"times": times})
 
@@ -217,20 +310,24 @@ def api_save_appointment(request):
         try:
             data = json.loads(request.body)
 
-            required_fields = ["salon_id", "service_id", "master_id", "date", "time"]
-            for field in required_fields:
-                if field not in data:
-                    return JsonResponse(
-                        {"error": f"Missing field: {field}"}, status=400
-                    )
+            appointment_data = {
+                "salon_id": data.get("salon_id"),
+                "service_id": data.get("service_id"),
+                "master_id": data.get("master_id"),
+                "date": data.get("date"),
+                "time": data.get("time"),
+            }
 
-            request.session["appointment_data"] = data
+            request.session["appointment_data"] = appointment_data
             request.session.modified = True
 
-            for key, value in data.items():
-                request.session[f"appointment_{key}"] = value
-
-            return JsonResponse({"success": True, "redirect_url": "/service-finally/"})
+            return JsonResponse(
+                {
+                    "success": True,
+                    "redirect_url": "/service-finally/",
+                    "message": "Данные сохранены",
+                }
+            )
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON"}, status=400)
 
@@ -273,24 +370,12 @@ def api_create_appointment(request):
             data = json.loads(request.body)
             appointment_data = request.session.get("appointment_data", {})
 
-            if not appointment_data:
-                appointment_data = data.get("appointment_data", {})
+            final_data = {**appointment_data, **data}
 
-            required_fields = [
-                "salon_id",
-                "service_id",
-                "master_id",
-                "date",
-                "time",
-                "phone",
-                "name",
+            required_fields = ["phone", "name", "date", "time"]
+            missing_fields = [
+                field for field in required_fields if not final_data.get(field)
             ]
-
-            # Проверяем наличие всех обязательных полей
-            missing_fields = []
-            for field in required_fields:
-                if field not in data and field not in appointment_data:
-                    missing_fields.append(field)
 
             if missing_fields:
                 return JsonResponse(
@@ -300,128 +385,70 @@ def api_create_appointment(request):
                     status=400,
                 )
 
-            try:
-                salon = Salon.objects.get(
-                    id=data.get("salon_id") or appointment_data.get("salon_id")
-                )
-                service = Service.objects.get(
-                    id=data.get("service_id") or appointment_data.get("service_id")
-                )
-                master = Master.objects.get(
-                    id=data.get("master_id") or appointment_data.get("master_id")
-                )
-            except (Salon.DoesNotExist, Service.DoesNotExist, Master.DoesNotExist) as e:
-                return JsonResponse({"error": str(e)}, status=400)
-
-            phone = data.get("phone")
-            name = data.get("name")
+            phone = final_data.get("phone")
+            name = final_data.get("name")
 
             form_data = {
                 "phone": phone,
                 "name": name,
-                "email": data.get("email", "")
-                }
+                "email": final_data.get("email", ""),
+            }
             form = ClientForm(form_data)
 
             if not form.is_valid():
-                errors = form.errors.as_data()
-                if errors:
-                    for field, error_list in errors.items():
-                        first_error = error_list[0]
-                        return JsonResponse({"error": str(first_error)}, status=400)
-                else:
-                    return JsonResponse({"error": "Неверные данные"}, status=400)
+                return JsonResponse({"error": form.errors.as_text()}, status=400)
 
-            # Если валидация прошла, используем очищенные данные
-            cleaned_data = form.cleaned_data
-            client, created = Client.objects.get_or_create(
-                phone=cleaned_data["phone"], 
-                defaults={
-                    "name": cleaned_data["name"],
-                    "email": cleaned_data["email"]
-                }
+            client, created = Client.objects.update_or_create(
+                phone=phone,
+                defaults={"name": name, "email": final_data.get("email", "")},
             )
 
-            if not created and (client.name != cleaned_data["name"] or client.email != cleaned_data["email"]):
-                client.name = cleaned_data["name"]
-                client.email = cleaned_data["email"]
-                client.save()
+            salon = None
+            service = None
+            master = None
 
-            if not phone or not name:
-                return JsonResponse({"error": "Не указаны телефон или имя"}, status=400)
+            if final_data.get("salon_id"):
+                try:
+                    salon = Salon.objects.get(id=final_data.get("salon_id"))
+                except Salon.DoesNotExist:
+                    pass
 
-            try:
-                parsed_number = parse(phone, "RU")
-                if not is_valid_number(parsed_number):
-                    return JsonResponse(
-                        {"error": "Неверный номер телефона"}, status=400
-                    )
+            if final_data.get("service_id"):
+                try:
+                    service = Service.objects.get(id=final_data.get("service_id"))
+                except Service.DoesNotExist:
+                    pass
 
-                phone = format_number(parsed_number, PhoneNumberFormat.E164)
-            except NumberParseException:
-                return JsonResponse({"error": "Неверный формат телефона"}, status=400)
+            if final_data.get("master_id"):
+                try:
+                    master = Master.objects.get(id=final_data.get("master_id"))
+                except Master.DoesNotExist:
+                    pass
 
-            client, created = Client.objects.get_or_create(
-                phone=phone, defaults={"name": name}
-            )
+            if not salon:
+                salon = Salon.objects.filter(is_active=True).first()
 
-            if not created and client.name != name:
-                client.name = name
-                client.save()
+            if not service:
+                service = Service.objects.filter(is_active=True).first()
 
-            date_str = data.get("date") or appointment_data.get("date")
-            time_str = data.get("time") or appointment_data.get("time")
-
-            if not date_str or not time_str:
-                return JsonResponse({"error": "Не указаны дата или время"}, status=400)
-
-            try:
-                appointment_date = datetime.strptime(date_str, "%Y-%m-%d").date()
-                appointment_time = datetime.strptime(time_str, "%H:%M").time()
-            except ValueError:
-                return JsonResponse(
-                    {"error": "Неверный формат даты или времени"}, status=400
-                )
-
-            try:
-                validate_future_date(appointment_date)
-                validate_working_hours(appointment_time)
-                validate_appointment_datetime(appointment_date, appointment_time)
-            except ValidationError as e:
-                return JsonResponse({"error": str(e)}, status=400)
-
-            # Проверка на занятость времени у мастера
-            existing_appointment = Appointment.objects.filter(
-                master=master,
-                appointment_date=appointment_date,
-                appointment_time=appointment_time,
-                status__in=["pending", "confirmed"],
-            ).exists()
-
-            if existing_appointment:
-                return JsonResponse({"error": "Это время уже занято"}, status=400)
+            if not master and service:
+                masters = service.masters.filter(is_active=True)
+                if masters.exists():
+                    master = masters.first()
 
             appointment = Appointment.objects.create(
                 client=client,
                 master=master,
                 service=service,
                 salon=salon,
-                appointment_date=appointment_date,
-                appointment_time=appointment_time,
+                appointment_date=datetime.strptime(
+                    final_data["date"], "%Y-%m-%d"
+                ).date(),
+                appointment_time=datetime.strptime(final_data["time"], "%H:%M").time(),
                 status="pending",
-                original_price=service.price,
-                final_price=service.price,
+                original_price=service.price if service else 0,
+                final_price=service.price if service else 0,
             )
-
-            promo_code = data.get("promo_code")
-            if promo_code:
-                try:
-                    promo = PromoCode.objects.get(code=promo_code, is_active=True)
-                    if promo.is_valid():
-                        appointment.promo_code = promo
-                        appointment.save()
-                except PromoCode.DoesNotExist:
-                    pass
 
             if "appointment_data" in request.session:
                 del request.session["appointment_data"]
@@ -430,23 +457,12 @@ def api_create_appointment(request):
                 {
                     "success": True,
                     "appointment_id": appointment.id,
-                    "appointment_number": f"#{appointment.id:05d}",
                     "message": "Запись успешно создана!",
-                    "client_name": client.name,
-                    "client_phone": str(client.phone),
-                    "appointment_date": appointment_date.strftime("%d.%m.%Y"),
-                    "appointment_time": appointment_time.strftime("%H:%M"),
-                    "service_name": service.name,
-                    "master_name": master.name,
-                    "salon_name": salon.name,
                 }
             )
-        except json.JSONDecodeError:
-            return JsonResponse({"error": "Неверный формат JSON"}, status=400)
+
         except Exception as e:
-            return JsonResponse(
-                {"error": f"Внутренняя ошибка сервера: {str(e)}"}, status=500
-            )
+            return JsonResponse({"error": str(e)}, status=500)
 
     return JsonResponse({"error": "Метод не разрешен"}, status=405)
 

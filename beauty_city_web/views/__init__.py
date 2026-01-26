@@ -13,6 +13,7 @@ __all__ = [
     "api_services",
     "api_masters",
     "api_available_dates",
+    "api_available_dates_simple",
     "api_available_times",
     "api_save_appointment",
     "api_check_promo",

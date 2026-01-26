@@ -15,6 +15,11 @@ urlpatterns = [
     path("api/services/", views.api_services, name="api_services"),
     path("api/masters/", views.api_masters, name="api_masters"),
     path("api/available-dates/", views.api_available_dates, name="api_available_dates"),
+    path(
+        "api/available-dates-simple/",
+        views.api_available_dates_simple,
+        name="api_available_dates_simple",
+    ),
     path("api/available-times/", views.api_available_times, name="api_available_times"),
     path(
         "api/save-appointment/", views.api_save_appointment, name="api_save_appointment"

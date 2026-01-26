@@ -34,7 +34,13 @@ def index(request):
 
 
 def service(request):
-    return render(request, "service.html")
+    # Получаем все активные салоны
+    salons = Salon.objects.filter(is_active=True)
+
+    context = {
+        "salons": salons,
+    }
+    return render(request, "service.html", context)
 
 
 def service_finally(request):
