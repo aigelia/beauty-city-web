@@ -19,9 +19,21 @@ from ..utils.validators import (
 
 @csrf_exempt
 def api_salons(request):
-    """Получить список всех активных салонов"""
+    """Получить список всех активных салонов с фильтрацией по мастеру"""
     try:
-        salons = Salon.objects.filter(is_active=True)
+        master_id = request.GET.get("master_id")
+
+        if master_id and master_id != "any":
+            # Фильтруем салоны по мастеру
+            try:
+                master = Master.objects.get(id=master_id)
+                salons = master.salons.filter(is_active=True).distinct()
+            except Master.DoesNotExist:
+                salons = Salon.objects.filter(is_active=True)
+        else:
+            # Получаем все активные салоны
+            salons = Salon.objects.filter(is_active=True)
+
         data = []
         for salon in salons:
             data.append(
@@ -34,7 +46,7 @@ def api_salons(request):
                     "photo_url": salon.photo.url if salon.photo else None,
                 }
             )
-        print(f"API Salons: Found {len(data)} salons")
+        print(f"API Salons: Found {len(data)} salons (master_id={master_id})")
         return JsonResponse({"salons": data})
     except Exception as e:
         print(f"API Salons Error: {str(e)}")
@@ -336,6 +348,32 @@ def api_save_appointment(request):
 
 
 @csrf_exempt
+def api_check_master_salon_compatibility(request):
+    """Проверить, работает ли мастер в указанном салоне"""
+    master_id = request.GET.get("master_id")
+    salon_id = request.GET.get("salon_id")
+
+    if not master_id or not salon_id:
+        return JsonResponse({"error": "Требуются master_id и salon_id"}, status=400)
+
+    try:
+        master = Master.objects.get(id=master_id)
+        salon = Salon.objects.get(id=salon_id)
+
+        is_compatible = master.salons.filter(id=salon.id).exists()
+
+        return JsonResponse(
+            {
+                "compatible": is_compatible,
+                "master_name": master.name,
+                "salon_name": salon.name,
+            }
+        )
+    except (Master.DoesNotExist, Salon.DoesNotExist):
+        return JsonResponse({"compatible": False, "error": "Объект не найден"})
+
+
+@csrf_exempt
 def api_check_promo(request):
     """Проверить промокод"""
     code = request.GET.get("code")
@@ -427,8 +465,32 @@ def api_create_appointment(request):
                 except Master.DoesNotExist:
                     pass
 
+            if master and salon:
+                if not master.salons.filter(id=salon.id).exists():
+                    return JsonResponse(
+                        {
+                            "success": False,
+                            "message": f"Мастер {master.name} не работает в салоне {salon.name}. Пожалуйста, выберите другой салон.",
+                            "error_code": "master_salon_incompatible",
+                        },
+                        status=400,
+                    )
+
             if not salon:
-                salon = Salon.objects.filter(is_active=True).first()
+                # Если салон не выбран, выбираем первый салон, где работает мастер
+                if master:
+                    master_salons = master.salons.filter(is_active=True)
+                    if master_salons.exists():
+                        salon = master_salons.first()
+                    else:
+                        return JsonResponse(
+                            {
+                                "success": False,
+                                "message": "Выбранный мастер не работает ни в одном салоне.",
+                            }
+                        )
+                else:
+                    salon = Salon.objects.filter(is_active=True).first()
 
             if not service:
                 service = Service.objects.filter(is_active=True).first()

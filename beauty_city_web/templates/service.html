@@ -94,6 +94,38 @@
     .time__btns_home:hover {
         background: #e0e0e0;
     }
+    .accordion__block.category-header {
+    background-color: #f8f9fa;
+    border-left: 3px solid #ffcc00;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    }
+    .accordion__block.category-header:hover {
+    background-color: #e9ecef;
+    }
+    
+    .accordion__block.category-header.expanded {
+        background-color: #ffcc00;
+        color: #000;
+    }
+    
+    .services-container {
+        padding-left: 20px;
+        background-color: #fafafa;
+        border-left: 2px solid #ddd;
+    }
+    
+    .accordion__block_item {
+        cursor: pointer;
+        padding: 8px 10px;
+        border-bottom: 1px solid #f0f0f0;
+        transition: background-color 0.2s;
+    }
+    
+    .accordion__block_item:hover {
+        background-color: #f0f8ff;
+    }
     </style>
     {% endblock head %}
 </head>
@@ -208,9 +240,9 @@
 	</div>
 	{% endblock popups %}
 	{% block scripts %}
-	<script src="{% static 'js/jquery.arcticmodal-0.3.min.js' %}"></script>
-	
-	<script>
+<script src="{% static 'js/jquery.arcticmodal-0.3.min.js' %}"></script>
+
+<script>
 $(document).ready(function() {
     console.log('=== Страница записи загружена ===');
     
@@ -237,50 +269,57 @@ $(document).ready(function() {
 
     // Функция валидации даты и времени
     function validateDateTime(selectedDate, selectedTime) {
-        if (!selectedDate || !selectedTime) return false;
-        
+        if (!selectedDate || !selectedTime) {
+            alert('Пожалуйста, выберите дату и время');
+            return false;
+        }
+
         var now = new Date();
         var selectedDateTime = new Date(selectedDate + 'T' + selectedTime + ':00');
-        
+
         // Проверка, что время не в прошлом
         if (selectedDateTime < now) {
             alert('Нельзя записаться на прошедшее время');
             return false;
         }
-        
+
         // Проверка на сегодня - минимум через час
         var today = new Date();
         today.setHours(0, 0, 0, 0);
         var selectedDateOnly = new Date(selectedDate);
         selectedDateOnly.setHours(0, 0, 0, 0);
-        
+
+        // Если выбрана сегодняшняя дата
         if (selectedDateOnly.getTime() === today.getTime()) {
             var oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
             if (selectedDateTime < oneHourLater) {
-                alert('При записи на сегодня минимальное время через 1 час');
+                alert('При записи на сегодня минимальное время через 1 час от текущего времени');
+                console.log('Текущее время:', now);
+                console.log('Выбранное время:', selectedDateTime);
+                console.log('Минимальное время (через час):', oneHourLater);
                 return false;
             }
         }
-        
+
         // Проверка рабочего времени (10:00-19:00 с шагом 30 минут)
         var hour = parseInt(selectedTime.split(':')[0]);
         var minute = parseInt(selectedTime.split(':')[1]);
-        
+
         if (hour < 10 || hour > 19) {
             alert('Время должно быть с 10:00 до 19:00');
             return false;
         }
-        
+
         if (minute !== 0 && minute !== 30) {
             alert('Время должно быть с шагом 30 минут (например: 10:00, 10:30)');
             return false;
         }
-        
+
         if (hour === 19 && minute > 0) {
             alert('Последнее доступное время - 19:00');
             return false;
         }
-        
+
         return true;
     }
     
@@ -288,13 +327,15 @@ $(document).ready(function() {
     function filterOptions() {
         console.log('Фильтрация опций с данными:', selectedData);
         
-        // Если выбран мастер, фильтруем салоны и услуги по мастеру
+        // Если выбран мастер, фильтруем салоны и услуги только по мастеру
         if (selectedData.master) {
             loadSalons({ master_id: selectedData.master.id });
-            loadServices({ 
-                master_id: selectedData.master.id,
-                salon_id: selectedData.salon ? selectedData.salon.id : null
-            });
+            loadServices({ master_id: selectedData.master.id });
+            
+            // Проверяем совместимость текущего салона с мастером
+            if (selectedData.salon) {
+                checkMasterInSalon(selectedData.master.id, selectedData.salon.id);
+            }
         }
         // Если выбран салон, фильтруем мастеров и услуги по салону
         else if (selectedData.salon) {
@@ -312,6 +353,52 @@ $(document).ready(function() {
             loadServices();
             loadMasters();
         }
+    }
+    
+    // Функция проверки, работает ли мастер в выбранном салоне
+    function checkMasterInSalon(masterId, salonId) {
+        $.ajax({
+            url: '/api/masters/',
+            type: 'GET',
+            data: { 
+                salon_id: salonId,
+                master_id: masterId
+            },
+            success: function(data) {
+                if (data.masters.length === 0) {
+                    // Мастер не работает в этом салоне - сбрасываем выбор салона
+                    console.log('Мастер не работает в выбранном салоне, сбрасываю выбор салона');
+                    selectedData.salon = null;
+                    updateButtonTexts();
+                    
+                    // Предупреждаем пользователя
+                    setTimeout(function() {
+                        alert('Выбранный мастер не работает в этом салоне. Пожалуйста, выберите другой салон из доступных.');
+                    }, 100);
+                }
+            },
+            error: function() {
+                console.error('Ошибка при проверке совместимости мастера и салона');
+            }
+        });
+    }
+    
+    // Функция проверки совместимости через специальный API
+    function checkCompatibility(masterId, salonId, callback) {
+        $.ajax({
+            url: '/api/check-master-salon-compatibility/',
+            type: 'GET',
+            data: { 
+                master_id: masterId,
+                salon_id: salonId
+            },
+            success: function(data) {
+                if (callback) callback(data.compatible, data);
+            },
+            error: function() {
+                if (callback) callback(false);
+            }
+        });
     }
     
     // Функция обновления текста кнопок
@@ -342,6 +429,7 @@ $(document).ready(function() {
         $(this).next(".panel").slideToggle(200);
     });
 
+    // Обработчики для загрузки данных при открытии панелей
     $('.service__salons .accordion').on('click', function() {
         if ($('.service__salons .panel').is(':visible') && !$(this).hasClass('loaded')) {
             var params = {};
@@ -379,8 +467,14 @@ $(document).ready(function() {
         var url = '/api/salons/';
         var queryParams = [];
         
-        if (params.master_id) queryParams.push('master_id=' + params.master_id);
-        if (params.service_id) queryParams.push('service_id=' + params.service_id);
+        // При выборе мастера показываем только его салоны
+        if (params.master_id) {
+            queryParams.push('master_id=' + params.master_id);
+        } 
+        // При выборе услуги показываем салоны с этой услугой
+        else if (params.service_id) {
+            queryParams.push('service_id=' + params.service_id);
+        }
         
         if (queryParams.length > 0) {
             url += '?' + queryParams.join('&');
@@ -396,19 +490,57 @@ $(document).ready(function() {
                 
                 if (data.salons.length === 0) {
                     $panel.html('<div class="accordion__block">Нет доступных салонов по выбранным критериям</div>');
+                    
+                    // Если выбран мастер, но нет его салонов, сбрасываем салон
+                    if (selectedData.master && selectedData.salon) {
+                        selectedData.salon = null;
+                        updateButtonTexts();
+                    }
                     return;
                 }
                 
                 data.salons.forEach(function(salon) {
                     var $salonBlock = $(
-                        '<div class="accordion__block fic">' +
+                        '<div class="accordion__block fic" data-salon-id="' + salon.id + '">' +
                         '<div class="accordion__block_intro">' + salon.name + '</div>' +
                         '<div class="accordion__block_address">' + salon.address + '</div>' +
                         '</div>'
                     );
                     
                     $salonBlock.on('click', function() {
+                        var salonId = $(this).data('salon-id');
                         console.log('Выбран салон:', salon.name);
+                        
+                        // Если уже выбран мастер, проверяем совместимость
+                        if (selectedData.master) {
+                            var isCompatible = false;
+                            var checkError = false;
+                            
+                            $.ajax({
+                                url: '/api/check-master-salon-compatibility/',
+                                type: 'GET',
+                                async: false,
+                                data: { 
+                                    master_id: selectedData.master.id,
+                                    salon_id: salonId
+                                },
+                                success: function(data) {
+                                    isCompatible = data.compatible;
+                                    if (!isCompatible) {
+                                        alert('Этот мастер не работает в выбранном салоне. Пожалуйста, выберите другой салон из списка доступных.');
+                                    }
+                                },
+                                error: function() {
+                                    alert('Ошибка при проверке совместимости');
+                                    isCompatible = false;
+                                }
+                            });
+                            
+                            // Если не совместимо, отменяем выбор
+                            if (!isCompatible) {
+                                return false;
+                            }
+                        }
                         
                         // Сохраняем выбранный салон
                         selectedData.salon = {
@@ -442,8 +574,13 @@ $(document).ready(function() {
         var url = '/api/services/';
         var queryParams = [];
         
-        if (params.salon_id) queryParams.push('salon_id=' + params.salon_id);
-        if (params.master_id) queryParams.push('master_id=' + params.master_id);
+        // Приоритет фильтрации: мастер -> салон -> услуга
+        if (params.master_id) {
+            queryParams.push('master_id=' + params.master_id);
+        }
+        if (params.salon_id) {
+            queryParams.push('salon_id=' + params.salon_id);
+        }
         
         if (queryParams.length > 0) {
             url += '?' + queryParams.join('&');
@@ -462,44 +599,62 @@ $(document).ready(function() {
                     return;
                 }
                 
+                // Обрабатываем каждую категорию
                 data.categories.forEach(function(category) {
                     var $categoryBtn = $(
-                        '<button class="accordion" type="button">' + category.name + '</button>'
+                        '<div class="accordion__block category-header" data-category-id="' + category.id + '">' +
+                        '<div class="accordion__block_intro">' + category.name + '</div>' +
+                        '</div>'
                     );
-                    
-                    var $categoryPanel = $('<div class="panel" style="display: none;"></div>');
-                    
+                        
+                    // Создаем контейнер для услуг этой категории
+                    var $servicesContainer = $('<div class="services-container" style="display: none;"></div>');
+                        
+                    // Добавляем услуги
                     category.services.forEach(function(service) {
                         var $serviceItem = $(
-                            '<div class="accordion__block_item fic">' +
+                            '<div class="accordion__block_item fic" data-service-id="' + service.id + '">' +
                             '<div class="accordion__block_item_intro">' + service.name + '</div>' +
                             '<div class="accordion__block_item_address">' + service.price + ' ₽</div>' +
                             '</div>'
                         );
-                        
+                            
                         $serviceItem.on('click', function(e) {
                             e.stopPropagation();
-                            
+
                             // Сохраняем выбранную услугу
                             selectedData.service = {
                                 id: service.id,
                                 name: service.name,
                                 price: service.price
                             };
-                            
+
                             updateButtonTexts();
                             $('.service__services .accordion').removeClass('active');
                             $('.service__services .panel').slideUp(200);
-                            
+
                             // Фильтруем другие опции
                             filterOptions();
                         });
-                        
-                        $categoryPanel.append($serviceItem);
+
+                        $servicesContainer.append($serviceItem);
                     });
-                    
+
+                    // Обработчик клика по заголовку категории
+                    $categoryBtn.on('click', function(e) {
+                        e.stopPropagation();
+                        var $this = $(this);
+                        var $container = $this.next('.services-container');
+
+                        // Переключаем отображение
+                        $container.slideToggle(200);
+
+                        // Добавляем/удаляем класс для визуального выделения
+                        $this.toggleClass('expanded');
+                    });
+
                     $panel.append($categoryBtn);
-                    $panel.append($categoryPanel);
+                    $panel.append($servicesContainer);
                 });
             },
             error: function(error) {
@@ -539,7 +694,7 @@ $(document).ready(function() {
                 data.masters.forEach(function(master) {
                     var photoUrl = master.photo_url || DEFAULT_AVATAR_URL;
                     var $masterBlock = $(
-                        '<div class="accordion__block fic">' +
+                        '<div class="accordion__block fic" data-master-id="' + master.id + '">' +
                         '<img src="' + photoUrl + '" alt="' + master.name + '" class="accordion__block_img" onerror="this.src=\'' + DEFAULT_AVATAR_URL + '\'">' +
                         '<div>' +
                         '<div class="accordion__block_master">' + master.name + '</div>' +
@@ -549,6 +704,38 @@ $(document).ready(function() {
                     );
                     
                     $masterBlock.on('click', function() {
+                        var masterId = $(this).data('master-id');
+                        console.log('Выбран мастер:', master.name);
+                        
+                        // Если уже выбран салон, проверяем совместимость
+                        if (selectedData.salon) {
+                            // Синхронная проверка совместимости
+                            var isCompatible = false;
+                            var checkError = false;
+                            
+                            $.ajax({
+                                url: '/api/check-master-salon-compatibility/',
+                                type: 'GET',
+                                async: false,
+                                data: { 
+                                    master_id: masterId,
+                                    salon_id: selectedData.salon.id
+                                },
+                                success: function(data) {
+                                    isCompatible = data.compatible;
+                                    if (!isCompatible) {
+                                        alert('Этот мастер не работает в выбранном салоне. Салон будет сброшен.');
+                                        // Сбрасываем выбор салона
+                                        selectedData.salon = null;
+                                    }
+                                },
+                                error: function() {
+                                    alert('Ошибка при проверке совместимости');
+                                    isCompatible = false;
+                                }
+                            });
+                        }
+                        
                         // Сохраняем выбранного мастера
                         selectedData.master = {
                             id: master.id,
@@ -563,8 +750,6 @@ $(document).ready(function() {
 
                         $('#selectedDateInfo').show();
                         $('#selectedDateText').text('(выберите дату выше)');
-                        
-                        console.log('Выбран мастер:', master.name);
                         
                         // Фильтруем другие опции
                         filterOptions();
@@ -601,6 +786,11 @@ $(document).ready(function() {
             alert('Сначала выберите дату');
             return;
         }
+
+        if (!selectedDate || selectedDate === '') {
+            alert('Пожалуйста, выберите дату');
+            return;
+        }
         
         if (!validateDateTime(selectedDate, selectedTime)) {
             $('.time__elems_btn').removeClass('active selected');
@@ -618,12 +808,7 @@ $(document).ready(function() {
     $('.time__btns_next').on('click', function() {
         console.log('Нажата кнопка "Далее"');
         console.log('Выбранные данные:', selectedData);
-        
-        // Проверка валидации даты и времени
-        if (!validateDateTime(selectedData.date, selectedData.time)) {
-            return;
-        }
-        
+
         // Проверка заполнения всех полей
         var missing = [];
         if (!selectedData.salon) missing.push('салон');
@@ -631,41 +816,111 @@ $(document).ready(function() {
         if (!selectedData.master) missing.push('мастер');
         if (!selectedData.date) missing.push('дата');
         if (!selectedData.time) missing.push('время');
-        
+
         if (missing.length > 0) {
             alert('Пожалуйста, заполните все поля. Отсутствует: ' + missing.join(', '));
             return;
         }
+
+        // Проверка валидации даты и времени (теперь ПЕРЕД всеми проверками)
+        if (!validateDateTime(selectedData.date, selectedData.time)) {
+            return;
+        }
         
-        // Сохраняем данные в сессии
-        $.ajax({
-            url: '/api/save-appointment/',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({
-                salon_id: selectedData.salon.id,
-                service_id: selectedData.service.id,
-                master_id: selectedData.master.id,
-                date: selectedData.date,
-                time: selectedData.time
-            }),
-            success: function(response) {
-                if (response.success) {
-                    window.location.href = response.redirect_url || '{% url "beauty_city_web:service_finally" %}';
-                } else {
-                    alert('Ошибка: ' + (response.error || 'Неизвестная ошибка при сохранении записи'));
+        // Дополнительная проверка совместимости мастера и салона
+        if (selectedData.master && selectedData.salon) {
+            $.ajax({
+                url: '/api/check-master-salon-compatibility/',
+                type: 'GET',
+                data: { 
+                    master_id: selectedData.master.id,
+                    salon_id: selectedData.salon.id
+                },
+                success: function(data) {
+                    if (!data.compatible) {
+                        alert('Ошибка: выбранный мастер ' + data.master_name + ' не работает в салоне ' + data.salon_name);
+                        return;
+                    }
+                    // Если совместимы, проверяем услугу
+                    checkServiceAvailability();
+                },
+                error: function() {
+                    alert('Ошибка при проверке совместимости. Пожалуйста, попробуйте еще раз.');
                 }
-            },
-            error: function(error) {
-                console.error('Ошибка сохранения записи:', error);
-                if (error.status === 404) {
-                    alert('Запись сохранена. Переход на страницу подтверждения...');
-                    window.location.href = '{% url "beauty_city_web:service_finally" %}';
-                } else {
-                    alert('Ошибка при сохранении записи. Пожалуйста, попробуйте еще раз.');
-                }
+            });
+        } else {
+            // Если нет салона или мастера, сразу проверяем услугу
+            checkServiceAvailability();
+        }
+
+        // Функция проверки доступности услуги
+        function checkServiceAvailability() {
+            if (selectedData.service && selectedData.master) {
+                $.ajax({
+                    url: '/api/services/',
+                    type: 'GET',
+                    data: { 
+                        master_id: selectedData.master.id,
+                        service_id: selectedData.service.id
+                    },
+                    success: function(data) {
+                        var foundService = false;
+                        data.categories.forEach(function(category) {
+                            category.services.forEach(function(service) {
+                                if (service.id == selectedData.service.id) {
+                                    foundService = true;
+                                }
+                            });
+                        });
+
+                        if (!foundService) {
+                            alert('Ошибка: выбранная услуга недоступна у этого мастера');
+                            return;
+                        }
+                        // Если услуга доступна, сохраняем запись
+                        saveAppointment();
+                    },
+                    error: function() {
+                        alert('Ошибка при проверке доступности услуги');
+                    }
+                });
+            } else {
+                // Если нет мастера или услуги, сразу сохраняем
+                saveAppointment();
             }
-        });
+        }
+
+        // Функция сохранения записи
+        function saveAppointment() {
+            $.ajax({
+                url: '/api/save-appointment/',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    salon_id: selectedData.salon.id,
+                    service_id: selectedData.service.id,
+                    master_id: selectedData.master.id,
+                    date: selectedData.date,
+                    time: selectedData.time
+                }),
+                success: function(response) {
+                    if (response.success) {
+                        window.location.href = response.redirect_url || '{% url "beauty_city_web:service_finally" %}';
+                    } else {
+                        alert('Ошибка: ' + (response.error || 'Неизвестная ошибка при сохранении записи'));
+                    }
+                },
+                error: function(error) {
+                    console.error('Ошибка сохранения записи:', error);
+                    if (error.status === 404) {
+                        alert('Запись сохранена. Переход на страницу подтверждения...');
+                        window.location.href = '{% url "beauty_city_web:service_finally" %}';
+                    } else {
+                        alert('Ошибка при сохранении записи. Пожалуйста, попробуйте еще раз.');
+                    }
+                }
+            });
+        }
     });
 
     // Обработчик кнопки "На главную"
@@ -681,7 +936,7 @@ $(document).ready(function() {
     // Устанавливаем минимальную дату (сегодня)
     var today = new Date().toISOString().split('T')[0];
     $('#appointmentDate').attr('min', today);
-    $('#appointmentDate').val(today);
+    $('#appointmentDate').attr('min', today);
     $('#selectedDateText').text(formatDate(today));
     $('#selectedDateInfo').show();
     
@@ -691,6 +946,6 @@ $(document).ready(function() {
     loadMasters();
 });
 </script>
-	{%endblock scripts %}
+{%endblock scripts %}
 </body>
 </html>

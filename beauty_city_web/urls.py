@@ -35,7 +35,15 @@ urlpatterns = [
         name="api_appointment_details",
     ),
     path("api/contact-request/", views.api_contact_request, name="api_contact_request"),
-    path("api/api-client-statistics/", views.api_client_statistics, name="api_client_statistics"),
-
+    path(
+        "api/api-client-statistics/",
+        views.api_client_statistics,
+        name="api_client_statistics",
+    ),
+    path(
+        "api/check-master-salon-compatibility/",
+        views.api_check_master_salon_compatibility,
+        name="api_check_master_salon_compatibility",
+    ),
     path("admin-page/", views.admin_page, name="admin_page"),
 ]
